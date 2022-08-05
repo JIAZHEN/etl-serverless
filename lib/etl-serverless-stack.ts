@@ -1,3 +1,4 @@
+import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
@@ -18,6 +19,29 @@ export class EtlServerlessStack extends Stack {
       entry: join(__dirname, "merchant-rules", "create.ts"),
       ...nodeJsFunctionProps,
     });
+
+    etlTable.grantReadWriteData(createOneLambda);
+
+    const createOneIntegration = new LambdaIntegration(createOneLambda);
+
+    // Create an API Gateway resource for each of the CRUD operations
+    const api = new RestApi(this, "MerchantRules API", {
+      restApiName: "MerchantRules Service",
+      defaultCorsPreflightOptions: {
+        allowHeaders: [
+          "Content-Type",
+          "X-Amz-Date",
+          "Authorization",
+          "X-Api-Key",
+        ],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["http://localhost:3000"],
+      },
+    });
+
+    const merchantRules = api.root.addResource("merchant-rules");
+    merchantRules.addMethod("POST", createOneIntegration);
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
