@@ -1,0 +1,17 @@
+{
+  "name": "etl-merchant-rules-lambda",
+  "version": "1.0.0",
+  "description": "Lambdas to do CRUD operations on DynamoDB",
+  "private": true,
+  "license": "MIT",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.101",
+    "@types/node": "*",
+    "@types/uuid": "*"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.142.0",
+    "aws-sdk": "*",
+    "uuid": "*"
+  }
+}
