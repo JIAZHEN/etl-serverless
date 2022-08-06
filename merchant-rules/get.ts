@@ -1,4 +1,4 @@
-import { GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { QueryCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ddbClient, handleError, Config } from "./util";
 
@@ -12,9 +12,12 @@ export const handler = async (
     };
   }
 
-  const params = new GetItemCommand({
+  const params = new QueryCommand({
+    KeyConditionExpression: "merchantId = :merchantId",
+    ExpressionAttributeValues: {
+      ":merchantId": { S: event.queryStringParameters.merchantId },
+    },
     TableName: Config.TABLE_NAME,
-    Key: { merchantId: { S: event.queryStringParameters.merchantId } },
   });
 
   try {
