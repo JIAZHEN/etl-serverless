@@ -9,6 +9,8 @@ import {
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 
+const lambdaPath = join(__dirname, "../merchant-rules");
+
 export class EtlServerlessStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -16,7 +18,7 @@ export class EtlServerlessStack extends Stack {
     const nodeJsFunctionProps = this.createLambdaProps(etlTable);
 
     const createOneLambda = new NodejsFunction(this, "createItemFunction", {
-      entry: join(__dirname, "merchant-rules", "create.ts"),
+      entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
     });
 
@@ -45,7 +47,7 @@ export class EtlServerlessStack extends Stack {
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
-    depsLockFilePath: join(__dirname, "merchant-rules", "package-lock.json"),
+    depsLockFilePath: `${lambdaPath}/package-lock.json`,
     environment: { TABLE_NAME: ddbTable.tableName },
     runtime: Runtime.NODEJS_14_X,
   });
