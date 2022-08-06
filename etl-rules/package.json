@@ -1,5 +1,5 @@
 {
-  "name": "etl-merchant-rules-lambda",
+  "name": "etl-rules-lambda",
   "version": "1.0.0",
   "description": "Lambdas to do CRUD operations on DynamoDB",
   "private": true,

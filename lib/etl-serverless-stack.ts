@@ -9,12 +9,12 @@ import {
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 
-const lambdaPath = join(__dirname, "../merchant-rules");
+const lambdaPath = join(__dirname, "../etl-rules");
 
 export class EtlServerlessStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    const etlTable = this.createMerchantRulesTable();
+    const etlTable = this.createEtlRulesTable();
     const nodeJsFunctionProps = this.createLambdaProps(etlTable);
 
     const createLambda = new NodejsFunction(this, "createFunction", {
@@ -34,33 +34,29 @@ export class EtlServerlessStack extends Stack {
 
     // Create an API Gateway resource for each of the CRUD operations
     const api = this.createApi();
-    const merchantRules = api.root.addResource("merchant-rules");
-    merchantRules.addMethod("POST", createIntegration);
-    merchantRules.addMethod("GET", getIntegration);
+    const EtlRules = api.root.addResource("etl-rules");
+    EtlRules.addMethod("POST", createIntegration);
+    EtlRules.addMethod("GET", getIntegration);
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
     environment: { TABLE_NAME: ddbTable.tableName },
-    runtime: Runtime.NODEJS_14_X,
+    runtime: Runtime.NODEJS_16_X,
   });
 
-  private createMerchantRulesTable = () =>
-    new Table(this, `ETL-Service-MerchantRules`, {
-      tableName: "MerchantRules",
+  private createEtlRulesTable = () =>
+    new Table(this, `ETL-Service-EtlRules`, {
+      tableName: "EtlRules",
       partitionKey: {
-        name: "merchantId",
-        type: AttributeType.STRING,
-      },
-      sortKey: {
-        name: "partnerId",
+        name: "uuid",
         type: AttributeType.STRING,
       },
     });
 
   private createApi = () =>
-    new RestApi(this, "MerchantRules API", {
-      restApiName: "MerchantRules Service",
+    new RestApi(this, "EtlRules API", {
+      restApiName: "EtlRules Service",
       defaultCorsPreflightOptions: {
         allowHeaders: [
           "Content-Type",

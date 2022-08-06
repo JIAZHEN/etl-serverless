@@ -3,6 +3,7 @@ import { marshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { MerchantRule } from "./types";
 import { ddbClient, handleError, Config } from "./util";
+import { v4 as uuidv4 } from "uuid";
 
 const createNewRule = async (merchantRule: MerchantRule) => {
   const cmdInput = {
@@ -28,6 +29,7 @@ export const handler = async (
       ...JSON.parse(event.body),
       createdAt: timeUtc,
       updatedAt: timeUtc,
+      uuid: uuidv4(),
     };
     const data = await createNewRule(merchantRule);
     return {
