@@ -5,16 +5,16 @@ import { ddbClient, handleError, Config } from "./util";
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  if (!event?.pathParameters?.id) {
+  if (!event?.queryStringParameters?.merchantId) {
     return {
       statusCode: 400,
-      body: "invalid request.",
+      body: "invalid request, missing merchantId.",
     };
   }
 
   const params = new GetItemCommand({
     TableName: Config.TABLE_NAME,
-    Key: { merchantId: { S: event.pathParameters.id } },
+    Key: { merchantId: { S: event.queryStringParameters.merchantId } },
   });
 
   try {
