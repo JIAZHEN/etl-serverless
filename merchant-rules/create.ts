@@ -1,28 +1,11 @@
-import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-
-const TABLE_NAME = process.env.TABLE_NAME || "";
-const ddbClient = new DynamoDBClient({});
-
-interface MerchantRule {
-  merchantId: string;
-  partnerId: string;
-  [key: string]: any;
-}
-
-const handleError = (e: unknown) => {
-  let msg = "";
-  if (typeof e === "string") {
-    msg = e;
-  } else if (e instanceof Error) {
-    msg = e.message;
-  }
-  return msg;
-};
+import { MerchantRule } from "./types";
+import { ddbClient, handleError, Config } from "./util";
 
 const createNewRule = async (merchantRule: MerchantRule) => {
   const cmdInput = {
-    TableName: TABLE_NAME,
+    TableName: Config.TABLE_NAME,
     Item: {
       merchantId: { S: merchantRule.merchantId },
       partnerId: { S: merchantRule.partnerId },

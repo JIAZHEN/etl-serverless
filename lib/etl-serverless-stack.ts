@@ -17,33 +17,26 @@ export class EtlServerlessStack extends Stack {
     const etlTable = this.createMerchantRulesTable();
     const nodeJsFunctionProps = this.createLambdaProps(etlTable);
 
-    const createOneLambda = new NodejsFunction(this, "createItemFunction", {
+    const createLambda = new NodejsFunction(this, "createFunction", {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
     });
-
-    etlTable.grantReadWriteData(createOneLambda);
-
-    const createOneIntegration = new LambdaIntegration(createOneLambda);
-
-    // Create an API Gateway resource for each of the CRUD operations
-    const api = new RestApi(this, "MerchantRules API", {
-      restApiName: "MerchantRules Service",
-      defaultCorsPreflightOptions: {
-        allowHeaders: [
-          "Content-Type",
-          "X-Amz-Date",
-          "Authorization",
-          "X-Api-Key",
-        ],
-        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-        allowCredentials: true,
-        allowOrigins: ["http://localhost:3000"],
-      },
+    const getLambda = new NodejsFunction(this, "getFunction", {
+      entry: `${lambdaPath}/get.ts`,
+      ...nodeJsFunctionProps,
     });
 
+    etlTable.grantReadWriteData(createLambda);
+    etlTable.grantReadData(getLambda);
+
+    const createIntegration = new LambdaIntegration(createLambda);
+    const getIntegration = new LambdaIntegration(getLambda);
+
+    // Create an API Gateway resource for each of the CRUD operations
+    const api = this.createApi();
     const merchantRules = api.root.addResource("merchant-rules");
-    merchantRules.addMethod("POST", createOneIntegration);
+    merchantRules.addMethod("POST", createIntegration);
+    merchantRules.addMethod("GET", getIntegration);
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
@@ -62,6 +55,22 @@ export class EtlServerlessStack extends Stack {
       sortKey: {
         name: "partnerId",
         type: AttributeType.STRING,
+      },
+    });
+
+  private createApi = () =>
+    new RestApi(this, "MerchantRules API", {
+      restApiName: "MerchantRules Service",
+      defaultCorsPreflightOptions: {
+        allowHeaders: [
+          "Content-Type",
+          "X-Amz-Date",
+          "Authorization",
+          "X-Api-Key",
+        ],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["http://localhost:3000"],
       },
     });
 }
