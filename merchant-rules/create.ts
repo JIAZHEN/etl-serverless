@@ -1,4 +1,5 @@
 import { PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { MerchantRule } from "./types";
 import { ddbClient, handleError, Config } from "./util";
@@ -6,10 +7,7 @@ import { ddbClient, handleError, Config } from "./util";
 const createNewRule = async (merchantRule: MerchantRule) => {
   const cmdInput = {
     TableName: Config.TABLE_NAME,
-    Item: {
-      merchantId: { S: merchantRule.merchantId },
-      partnerId: { S: merchantRule.partnerId },
-    },
+    Item: marshall(merchantRule),
   };
   return await ddbClient.send(new PutItemCommand(cmdInput));
 };
@@ -25,9 +23,17 @@ export const handler = async (
   }
 
   try {
-    const merchantRule: MerchantRule = JSON.parse(event.body);
+    const timeUtc = new Date().toUTCString();
+    const merchantRule: MerchantRule = {
+      ...JSON.parse(event.body),
+      createdAt: timeUtc,
+      updatedAt: timeUtc,
+    };
     const data = await createNewRule(merchantRule);
-    return { statusCode: 200, body: JSON.stringify({ merchantRule: data }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ...data, item: merchantRule }),
+    };
   } catch (e: unknown) {
     return { statusCode: 500, body: handleError(e) };
   }

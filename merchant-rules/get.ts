@@ -1,4 +1,5 @@
 import { QueryCommand } from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ddbClient, handleError, Config } from "./util";
 
@@ -22,7 +23,11 @@ export const handler = async (
 
   try {
     const data = await ddbClient.send(params);
-    return { statusCode: 200, body: JSON.stringify({ merchantRule: data }) };
+    const formattedItems = data?.Items?.map((item) => unmarshall(item)) || [];
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ...data, Items: formattedItems }),
+    };
   } catch (e: unknown) {
     return { statusCode: 500, body: handleError(e) };
   }
