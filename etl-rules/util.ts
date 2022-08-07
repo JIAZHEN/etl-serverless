@@ -13,4 +13,5 @@ export const handleError = (e: unknown) => {
 
 export const Config = {
   TABLE_NAME: process.env.TABLE_NAME,
+  MERCHANTID_INDEX: process.env.MERCHANTID_INDEX,
 };

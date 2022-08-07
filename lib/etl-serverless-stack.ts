@@ -1,7 +1,7 @@
 import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, Table, ProjectionType } from "aws-cdk-lib/aws-dynamodb";
 import {
   NodejsFunction,
   NodejsFunctionProps,
@@ -10,6 +10,7 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 
 const lambdaPath = join(__dirname, "../etl-rules");
+const merchantIdIndexName = "merchantIdIndex";
 
 export class EtlServerlessStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -41,18 +42,30 @@ export class EtlServerlessStack extends Stack {
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
-    environment: { TABLE_NAME: ddbTable.tableName },
+    environment: {
+      TABLE_NAME: ddbTable.tableName,
+      MERCHANTID_INDEX: merchantIdIndexName,
+    },
     runtime: Runtime.NODEJS_16_X,
   });
 
-  private createEtlRulesTable = () =>
-    new Table(this, `ETL-Service-EtlRules`, {
+  private createEtlRulesTable = () => {
+    const table = new Table(this, `ETL-Service-EtlRules`, {
       tableName: "EtlRules",
       partitionKey: {
         name: "uuid",
         type: AttributeType.STRING,
       },
     });
+    table.addGlobalSecondaryIndex({
+      indexName: merchantIdIndexName,
+      partitionKey: { name: "merchantId", type: AttributeType.STRING },
+      readCapacity: 1,
+      writeCapacity: 1,
+      projectionType: ProjectionType.ALL,
+    });
+    return table;
+  };
 
   private createApi = () =>
     new RestApi(this, "EtlRules API", {

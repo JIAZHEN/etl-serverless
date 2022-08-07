@@ -19,6 +19,7 @@ export const handler = async (
       ":merchantId": { S: event.queryStringParameters.merchantId },
     },
     TableName: Config.TABLE_NAME,
+    IndexName: Config.MERCHANTID_INDEX,
   });
 
   try {
