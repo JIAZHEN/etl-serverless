@@ -58,7 +58,7 @@ export class EtlServerlessStack extends Stack {
     const etlRule = etlRules.addResource("{id}");
     etlRule.addMethod("GET", getOneIntegration);
     etlRule.addMethod("DELETE", deleteOneIntegration);
-    etlRule.addMethod("PATCH", updateOneIntegration);
+    etlRule.addMethod("PUT", updateOneIntegration);
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
