@@ -9,11 +9,15 @@ const lambdaHandler = async (
 ): Promise<APIGatewayProxyResult> => {
   const params = new ScanCommand({ TableName: Config.TABLE_NAME });
   const data = await ddbClient.send(params);
-  const formattedItems = data?.Items?.map((item) => unmarshall(item)) || [];
+  const formattedItems =
+    data?.Items?.map((item) => {
+      const rule = unmarshall(item);
+      return { ...rule, id: rule.uuid };
+    }) || [];
   return {
     statusCode: 200,
     headers: { "X-Total-Count": String(data.Count) },
-    body: JSON.stringify({ Count: data.Count, Items: formattedItems }),
+    body: JSON.stringify(formattedItems),
   };
 };
 
