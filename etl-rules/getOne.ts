@@ -1,7 +1,6 @@
 import { GetItemCommand } from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config } from "./util";
+import { ddbClient, Config, formatItem } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity, NotFound } from "http-errors";
 
@@ -25,7 +24,7 @@ const lambdaHandler = async (
 
   return {
     statusCode: 200,
-    body: JSON.stringify(unmarshall(data.Item)),
+    body: JSON.stringify(formatItem(data.Item)),
   };
 };
 
