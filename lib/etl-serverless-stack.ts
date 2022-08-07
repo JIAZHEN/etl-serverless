@@ -34,15 +34,21 @@ export class EtlServerlessStack extends Stack {
       entry: `${lambdaPath}/deleteOne.ts`,
       ...nodeJsFunctionProps,
     });
+    const updateOneLambda = new NodejsFunction(this, "updateOneFunction", {
+      entry: `${lambdaPath}/updateOne.ts`,
+      ...nodeJsFunctionProps,
+    });
 
     etlTable.grantReadWriteData(createLambda);
     etlTable.grantReadData(getAllLambda);
     etlTable.grantReadData(getOneLambda);
     etlTable.grantReadWriteData(deleteOneLambda);
+    etlTable.grantReadWriteData(updateOneLambda);
     const createIntegration = new LambdaIntegration(createLambda);
     const getAllIntegration = new LambdaIntegration(getAllLambda);
     const getOneIntegration = new LambdaIntegration(getOneLambda);
     const deleteOneIntegration = new LambdaIntegration(deleteOneLambda);
+    const updateOneIntegration = new LambdaIntegration(updateOneLambda);
 
     // Create an API Gateway resource for each of the CRUD operations
     const api = this.createApi();
@@ -52,6 +58,7 @@ export class EtlServerlessStack extends Stack {
     const etlRule = etlRules.addResource("{id}");
     etlRule.addMethod("GET", getOneIntegration);
     etlRule.addMethod("DELETE", deleteOneIntegration);
+    etlRule.addMethod("PATCH", updateOneIntegration);
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
