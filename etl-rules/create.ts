@@ -1,9 +1,11 @@
 import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 import { MerchantRule } from "./types";
-import { ddbClient, handleError, Config } from "./util";
+import { ddbClient, Config } from "./util";
 import { v4 as uuidv4 } from "uuid";
+import httpJsonBodyParser from "@middy/http-json-body-parser";
+import { withDefaultMiddy } from "./middleware";
 
 const createNewRule = async (merchantRule: MerchantRule) => {
   const cmdInput = {
@@ -13,30 +15,25 @@ const createNewRule = async (merchantRule: MerchantRule) => {
   return await ddbClient.send(new PutItemCommand(cmdInput));
 };
 
-export const handler = async (
-  event: APIGatewayEvent
-): Promise<APIGatewayProxyResult> => {
-  if (!event.body) {
-    return {
-      statusCode: 400,
-      body: "invalid request, you are missing the parameter body",
-    };
-  }
-
-  try {
-    const timeUtc = new Date().toUTCString();
-    const merchantRule: MerchantRule = {
-      ...JSON.parse(event.body),
-      createdAt: timeUtc,
-      updatedAt: timeUtc,
-      uuid: uuidv4(),
-    };
-    const data = await createNewRule(merchantRule);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ ...data, item: merchantRule }),
-    };
-  } catch (e: unknown) {
-    return { statusCode: 500, body: handleError(e) };
-  }
+const lambdaHandler = async ({
+  body,
+}: {
+  body: MerchantRule;
+}): Promise<APIGatewayProxyResult> => {
+  const timeUtc = new Date().toUTCString();
+  const merchantRule: MerchantRule = {
+    ...body,
+    createdAt: timeUtc,
+    updatedAt: timeUtc,
+    uuid: uuidv4(),
+  };
+  const data = await createNewRule(merchantRule);
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ ...data, item: merchantRule }),
+  };
 };
+
+export const handler = withDefaultMiddy(lambdaHandler).use(
+  httpJsonBodyParser()
+);

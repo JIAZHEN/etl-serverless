@@ -22,16 +22,16 @@ export class EtlServerlessStack extends Stack {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
     });
-    const getLambda = new NodejsFunction(this, "getFunction", {
-      entry: `${lambdaPath}/get.ts`,
+    const getAllLambda = new NodejsFunction(this, "getAllFunction", {
+      entry: `${lambdaPath}/getAll.ts`,
       ...nodeJsFunctionProps,
     });
 
     etlTable.grantReadWriteData(createLambda);
-    etlTable.grantReadData(getLambda);
+    etlTable.grantReadData(getAllLambda);
 
     const createIntegration = new LambdaIntegration(createLambda);
-    const getIntegration = new LambdaIntegration(getLambda);
+    const getIntegration = new LambdaIntegration(getAllLambda);
 
     // Create an API Gateway resource for each of the CRUD operations
     const api = this.createApi();
@@ -46,6 +46,7 @@ export class EtlServerlessStack extends Stack {
       TABLE_NAME: ddbTable.tableName,
       MERCHANTID_INDEX: merchantIdIndexName,
     },
+    bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
   });
 
