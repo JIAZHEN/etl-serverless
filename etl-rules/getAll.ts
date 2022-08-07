@@ -1,7 +1,7 @@
 import { ScanCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, handleError, Config } from "./util";
+import { ddbClient, Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 
 const lambdaHandler = async (
@@ -12,6 +12,7 @@ const lambdaHandler = async (
   const formattedItems = data?.Items?.map((item) => unmarshall(item)) || [];
   return {
     statusCode: 200,
+    headers: { "X-Total-Count": String(data.Count) },
     body: JSON.stringify({ Count: data.Count, Items: formattedItems }),
   };
 };

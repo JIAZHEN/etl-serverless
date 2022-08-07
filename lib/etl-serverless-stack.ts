@@ -77,6 +77,7 @@ export class EtlServerlessStack extends Stack {
           "X-Amz-Date",
           "Authorization",
           "X-Api-Key",
+          "X-Total-Count",
         ],
         allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
         allowCredentials: true,
