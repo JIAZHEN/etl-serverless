@@ -22,7 +22,10 @@ export class EtlCoreStack extends Stack {
     });
     const coreTable = this.createEtlCoreTable();
 
-    const nodeJsFunctionProps = this.createLambdaProps(coreTable);
+    const nodeJsFunctionProps = this.createLambdaProps(
+      coreTable,
+      coreBucket.bucketName
+    );
     const createLambda = new NodejsFunction(this, "createFunction", {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
@@ -66,10 +69,14 @@ export class EtlCoreStack extends Stack {
       binaryMediaTypes: ["text/csv"],
     });
 
-  private createLambdaProps = (coreTable: Table): NodejsFunctionProps => ({
+  private createLambdaProps = (
+    coreTable: Table,
+    bucketName: string
+  ): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
     environment: {
       CORE_TABLE: coreTable.tableName,
+      CORE_BUCKET: bucketName,
     },
     bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
