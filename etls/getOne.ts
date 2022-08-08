@@ -1,8 +1,21 @@
 import { GetItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config, formatItem } from "./util";
+import { ddbClient, Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity, NotFound } from "http-errors";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+
+export const getItemById = async (id: string) => {
+  const params = new GetItemCommand({
+    TableName: Config.TABLE_NAME,
+    Key: { uuid: { S: id } },
+  });
+  const data = await ddbClient.send(params);
+  if (!data?.Item) {
+    throw new NotFound(`Rule not found with ID ${id}`);
+  }
+  return unmarshall(data.Item);
+};
 
 const lambdaHandler = async (
   event: APIGatewayEvent
@@ -11,20 +24,10 @@ const lambdaHandler = async (
     throw new UnprocessableEntity();
   }
 
-  const params = new GetItemCommand({
-    TableName: Config.TABLE_NAME,
-    Key: { uuid: { S: event.pathParameters.id } },
-  });
-
-  const data = await ddbClient.send(params);
-
-  if (!data?.Item) {
-    throw new NotFound(`Rule not found with ID ${event.pathParameters.id}`);
-  }
-
+  const item = await getItemById(event.pathParameters.id);
   return {
     statusCode: 200,
-    body: JSON.stringify(formatItem(data.Item)),
+    body: JSON.stringify(item),
   };
 };
 

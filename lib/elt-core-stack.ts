@@ -30,14 +30,33 @@ export class EtlCoreStack extends Stack {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
     });
+    const getAllLambda = new NodejsFunction(this, "getAllFunction", {
+      entry: `${lambdaPath}/getAll.ts`,
+      ...nodeJsFunctionProps,
+    });
+    const getOneLambda = new NodejsFunction(this, "getOneFunction", {
+      entry: `${lambdaPath}/getOne.ts`,
+      ...nodeJsFunctionProps,
+    });
+    const deleteOneLambda = new NodejsFunction(this, "deleteOneFunction", {
+      entry: `${lambdaPath}/deleteOne.ts`,
+      ...nodeJsFunctionProps,
+    });
 
     coreTable.grantReadWriteData(createLambda);
+    coreTable.grantReadData(getAllLambda);
+    coreTable.grantReadData(getOneLambda);
+    coreTable.grantReadWriteData(deleteOneLambda);
     coreBucket.grantReadWrite(createLambda);
+    coreBucket.grantReadWrite(deleteOneLambda);
 
-    const createIntegration = new LambdaIntegration(createLambda);
     const api = this.createApi();
     const etls = api.root.addResource("etls");
-    etls.addMethod("POST", createIntegration);
+    etls.addMethod("POST", new LambdaIntegration(createLambda));
+    etls.addMethod("GET", new LambdaIntegration(getAllLambda));
+    const etl = etls.addResource("{id}");
+    etl.addMethod("GET", new LambdaIntegration(getOneLambda));
+    etl.addMethod("DELETE", new LambdaIntegration(deleteOneLambda));
   }
 
   private createEtlCoreTable = () => {

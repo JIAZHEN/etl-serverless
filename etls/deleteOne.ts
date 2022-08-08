@@ -1,8 +1,17 @@
 import { DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config } from "./util";
+import { ddbClient, Config, deleteS3Object } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
+import { getItemById } from "./getOne";
+
+const deleteDDBItem = async (id: string) => {
+  const params = new DeleteItemCommand({
+    TableName: Config.TABLE_NAME,
+    Key: { uuid: { S: id } },
+  });
+  return await ddbClient.send(params);
+};
 
 const lambdaHandler = async (
   event: APIGatewayEvent
@@ -11,11 +20,11 @@ const lambdaHandler = async (
     throw new UnprocessableEntity();
   }
 
-  const params = new DeleteItemCommand({
-    TableName: Config.TABLE_NAME,
-    Key: { uuid: { S: event.pathParameters.id } },
-  });
-  await ddbClient.send(params);
+  const id = event.pathParameters.id;
+  const item = await getItemById(id);
+  await deleteS3Object(item.s3Key); // delete the S3 file
+  await deleteDDBItem(id);
+
   return {
     statusCode: 200,
     body: "",

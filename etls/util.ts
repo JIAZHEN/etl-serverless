@@ -1,6 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 export const ddbClient = new DynamoDBClient({});
 export const s3Client = new S3Client({});
@@ -17,6 +17,14 @@ export const uploadFile = async (s3Key: string, bodyContent: Buffer) => {
     Body: bodyContent,
   };
   return await s3Client.send(new PutObjectCommand(params));
+};
+
+export const deleteS3Object = async (s3Key: string) => {
+  const params = {
+    Bucket: Config.CORE_BUCKET,
+    Key: s3Key,
+  };
+  return await s3Client.send(new DeleteObjectCommand(params));
 };
 
 export const etlStatus = {
