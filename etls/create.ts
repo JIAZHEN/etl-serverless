@@ -2,9 +2,9 @@ import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayProxyResult } from "aws-lambda";
 import { EtlCreateInput } from "./types";
-import { ddbClient, Config } from "./util";
+import { ddbClient, Config, uploadFile, etlStatus } from "./util";
 import { v4 as uuidv4 } from "uuid";
-import httpJsonBodyParser from "@middy/http-json-body-parser";
+import httpMultipartBodyParser from "@middy/http-multipart-body-parser";
 import { withDefaultMiddy } from "./middleware";
 
 const create = async (createInput: EtlCreateInput) => {
@@ -15,19 +15,28 @@ const create = async (createInput: EtlCreateInput) => {
   return await ddbClient.send(new PutItemCommand(cmdInput));
 };
 
+const getS3KeyFromInput = (input: EtlCreateInput) => {
+  const todayDate = new Date().toISOString().slice(0, 10);
+  return `${input.merchantId}/${input.partnerId}/${todayDate}/${input.partnerFile.filename}`;
+};
+
 const lambdaHandler = async ({
   body,
 }: {
   body: EtlCreateInput;
 }): Promise<APIGatewayProxyResult> => {
-  console.info("Uploaded data is", body);
-  console.info(body);
+  const s3Key = getS3KeyFromInput(body);
+  await uploadFile(s3Key, body.partnerFile.content);
+
+  delete body.partnerFile; // remove uploaded file
   const timeUtc = new Date().toUTCString();
   const createInput: EtlCreateInput = {
     ...body,
+    etlStatus: etlStatus.pending,
     createdAt: timeUtc,
     updatedAt: timeUtc,
     id: uuidv4(),
+    s3Key: s3Key,
   };
   const data = await create(createInput);
   return {
@@ -37,5 +46,5 @@ const lambdaHandler = async ({
 };
 
 export const handler = withDefaultMiddy(lambdaHandler).use(
-  httpJsonBodyParser()
+  httpMultipartBodyParser()
 );

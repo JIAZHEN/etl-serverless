@@ -1,14 +1,27 @@
-import { AttributeValue, DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const ddbClient = new DynamoDBClient({});
+export const s3Client = new S3Client({});
 
 export const Config = {
   TABLE_NAME: process.env.TABLE_NAME,
-  MERCHANTID_INDEX: process.env.MERCHANTID_INDEX,
+  CORE_BUCKET: process.env.CORE_BUCKET,
 };
 
-export const formatItem = (item: Record<string, AttributeValue>) => {
-  const rule = unmarshall(item);
-  return { ...rule, id: rule.uuid };
+export const uploadFile = async (s3Key: string, bodyContent: Buffer) => {
+  const params = {
+    Bucket: Config.CORE_BUCKET,
+    Key: s3Key,
+    Body: bodyContent,
+  };
+  return await s3Client.send(new PutObjectCommand(params));
+};
+
+export const etlStatus = {
+  pending: "pending",
+  processing: "processing",
+  failed: "failed",
+  success: "success",
 };

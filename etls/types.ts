@@ -3,6 +3,7 @@ export interface EtlCreateInput {
   partnerId: string;
   s3Key: string;
   [key: string]: any;
+  etlStatus: string;
 }
 
 export interface Etl {
@@ -10,6 +11,7 @@ export interface Etl {
   partnerId: string;
   id: string;
   s3Key: string;
+  etlStatus: string;
   etlResult: {
     total: number;
     valid: number;

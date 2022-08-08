@@ -75,7 +75,7 @@ export class EtlCoreStack extends Stack {
   ): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
     environment: {
-      CORE_TABLE: coreTable.tableName,
+      TABLE_NAME: coreTable.tableName,
       CORE_BUCKET: bucketName,
     },
     bundling: { externalModules: ["aws-sdk"] },
