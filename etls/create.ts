@@ -4,8 +4,8 @@ import { APIGatewayProxyResult } from "aws-lambda";
 import { EtlCreateInput } from "./types";
 import { ddbClient, Config, uploadFile, etlStatus } from "./util";
 import { v4 as uuidv4 } from "uuid";
-import httpMultipartBodyParser from "@middy/http-multipart-body-parser";
 import { withDefaultMiddy } from "./middleware";
+import httpJsonBodyParser from "@middy/http-json-body-parser";
 
 const create = async (createInput: EtlCreateInput) => {
   const cmdInput = {
@@ -46,5 +46,5 @@ const lambdaHandler = async ({
 };
 
 export const handler = withDefaultMiddy(lambdaHandler).use(
-  httpMultipartBodyParser()
+  httpJsonBodyParser()
 );
