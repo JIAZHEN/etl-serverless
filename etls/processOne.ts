@@ -23,13 +23,16 @@ const lambdaHandler = async ({
   const item = await getItemById(id);
   const s3Object = await getS3Object(item.s3Key);
 
-  s3Object.Body.pipe(csv.parse({ headers: true })).on("data", (row: any) => {
-    console.log(row);
-  });
+  await s3Object.Body.pipe(csv.parse({ headers: true }))
+    .on("error", (error: any) => console.error(error))
+    .on("data", (row: any) => {
+      console.log(row);
+    })
+    .on("end", (rowCount: number) => console.log(`Parsed ${rowCount} rows`));
 
   return {
     statusCode: 200,
-    body: "",
+    body: "{}",
   };
 };
 
