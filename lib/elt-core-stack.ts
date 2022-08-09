@@ -46,12 +46,17 @@ export class EtlCoreStack extends Stack {
       entry: `${lambdaPath}/updateOne.ts`,
       ...nodeJsFunctionProps,
     });
+    const processOneLambda = new NodejsFunction(this, "processOneFunction", {
+      entry: `${lambdaPath}/processOne.ts`,
+      ...nodeJsFunctionProps,
+    });
 
     coreTable.grantReadWriteData(createLambda);
     coreTable.grantReadData(getAllLambda);
     coreTable.grantReadData(getOneLambda);
     coreTable.grantReadWriteData(deleteOneLambda);
     coreTable.grantReadWriteData(updateOneLambda);
+    coreTable.grantReadData(processOneLambda);
     coreBucket.grantReadWrite(createLambda);
     coreBucket.grantReadWrite(deleteOneLambda);
 
@@ -63,6 +68,8 @@ export class EtlCoreStack extends Stack {
     etl.addMethod("GET", new LambdaIntegration(getOneLambda));
     etl.addMethod("DELETE", new LambdaIntegration(deleteOneLambda));
     etl.addMethod("PUT", new LambdaIntegration(updateOneLambda));
+    const etlProcess = etl.addResource("process");
+    etlProcess.addMethod("POST", new LambdaIntegration(processOneLambda));
   }
 
   private createEtlCoreTable = () => {
