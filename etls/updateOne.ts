@@ -1,16 +1,17 @@
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayProxyResult } from "aws-lambda";
 import { ddbClient, Config } from "./util";
+import { marshall } from "@aws-sdk/util-dynamodb";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { MerchantRule } from "./types";
+import { Etl } from "./types";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 
 const lambdaHandler = async ({
   body,
   pathParameters,
 }: {
-  body: MerchantRule;
+  body: Etl;
   pathParameters: any;
 }): Promise<APIGatewayProxyResult> => {
   if (!pathParameters?.id) {
@@ -19,14 +20,15 @@ const lambdaHandler = async ({
 
   const params: any = new UpdateItemCommand({
     TableName: Config.TABLE_NAME,
-    Key: { uuid: { S: pathParameters.id } },
-    UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,rule=:rule,updatedAt=:updatedAt`,
-    ExpressionAttributeValues: {
-      ":merchantId": { S: body.merchantId },
-      ":partnerId": { S: body.partnerId },
-      ":rule": { S: body.rule },
-      ":updatedAt": { S: new Date().toUTCString() },
-    },
+    Key: { id: { S: pathParameters.id } },
+    UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,etlResult=:etlResult,updatedAt=:updatedAt,etlStatus=:etlStatus`,
+    ExpressionAttributeValues: marshall({
+      ":merchantId": body.merchantId,
+      ":partnerId": body.partnerId,
+      ":etlResult": body.etlResult || {},
+      ":etlStatus": body.etlStatus,
+      ":updatedAt": new Date().toUTCString(),
+    }),
     ReturnValues: "UPDATED_NEW",
   });
 

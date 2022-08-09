@@ -37,6 +37,7 @@ const lambdaHandler = async ({
     updatedAt: timeUtc,
     id: uuidv4(),
     s3Key: s3Key,
+    etlResult: {},
   };
   const data = await create(createInput);
   return {
