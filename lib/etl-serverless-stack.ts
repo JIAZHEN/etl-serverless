@@ -13,6 +13,8 @@ const lambdaPath = join(__dirname, "../etl-rules");
 const merchantIdIndexName = "merchantIdIndex";
 
 export class EtlServerlessStack extends Stack {
+  public readonly rulesGateway: RestApi;
+
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
     const etlTable = this.createEtlRulesTable();
@@ -59,6 +61,8 @@ export class EtlServerlessStack extends Stack {
     etlRule.addMethod("GET", getOneIntegration);
     etlRule.addMethod("DELETE", deleteOneIntegration);
     etlRule.addMethod("PUT", updateOneIntegration);
+
+    this.rulesGateway = api;
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({

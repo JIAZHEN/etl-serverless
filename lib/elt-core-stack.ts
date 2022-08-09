@@ -12,8 +12,12 @@ import { join } from "path";
 
 const lambdaPath = join(__dirname, "../etls");
 
+interface EtlCoreStackProps extends StackProps {
+  rulesGateway: RestApi;
+}
+
 export class EtlCoreStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: EtlCoreStackProps) {
     super(scope, id, props);
     const coreBucket = new Bucket(this, "etl-core", {
       removalPolicy: RemovalPolicy.DESTROY,
@@ -22,10 +26,13 @@ export class EtlCoreStack extends Stack {
     });
     const coreTable = this.createEtlCoreTable();
 
-    const nodeJsFunctionProps = this.createLambdaProps(
-      coreTable,
-      coreBucket.bucketName
-    );
+    const nodeJsFunctionProps = this.createLambdaProps({
+      TABLE_NAME: coreTable.tableName,
+      CORE_BUCKET: coreBucket.bucketName,
+      RULES_API_GATEWAY_ID: props?.rulesGateway?.restApiId || "",
+      REGION: process.env.CDK_DEFAULT_REGION || "",
+    });
+
     const createLambda = new NodejsFunction(this, "createFunction", {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
@@ -59,6 +66,7 @@ export class EtlCoreStack extends Stack {
     coreTable.grantReadData(processOneLambda);
     coreBucket.grantReadWrite(createLambda);
     coreBucket.grantReadWrite(deleteOneLambda);
+    coreBucket.grantRead(processOneLambda);
 
     const api = this.createApi();
     const etls = api.root.addResource("etls");
@@ -101,15 +109,11 @@ export class EtlCoreStack extends Stack {
       binaryMediaTypes: ["text/csv"],
     });
 
-  private createLambdaProps = (
-    coreTable: Table,
-    bucketName: string
-  ): NodejsFunctionProps => ({
+  private createLambdaProps = (environment: {
+    [key: string]: string;
+  }): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
-    environment: {
-      TABLE_NAME: coreTable.tableName,
-      CORE_BUCKET: bucketName,
-    },
+    environment: environment,
     bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
   });
