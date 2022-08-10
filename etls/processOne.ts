@@ -4,7 +4,7 @@ import { ddbClient, Config, getS3Object } from "./util";
 import { marshall } from "@aws-sdk/util-dynamodb";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { Etl } from "./types";
+import { MerchantRule } from "../etl-rules/types";
 import { getItemById } from "./getOne";
 import * as csv from "@fast-csv/parse";
 import fetch from "node-fetch";
@@ -17,47 +17,25 @@ const rulesUrl = `https://${Config.RULES_API_GATEWAY_ID}.execute-api.${Config.RE
 const getRulesBy = async (merchantId: string, partnerId: string) => {
   const query = new URLSearchParams({ merchantId, partnerId });
   const response = await fetch(`${rulesUrl}/etl-rules?${query}`);
-  return await response.json();
+  return (await response.json()) as MerchantRule[];
 };
 
-const setupRuleEngine = () => {
-  return new Engine([
-    {
-      conditions: {
-        all: [
-          {
-            fact: "email",
-            operator: "equal",
-            value: "mitch.flaherty@gmail.com",
-          },
-        ],
-      },
-      event: {
-        type: "row-valid",
-        params: {},
-      },
-    },
-    {
-      conditions: {
-        all: [
-          {
-            fact: "id",
-            operator: "equal",
-            value: "13166",
-          },
-        ],
-      },
-      event: {
-        type: "row-invalid",
-        params: {},
-      },
-    },
-  ]);
+const setupRuleEngine = (rules: MerchantRule[]) => {
+  const formattedRules = rules.map((rule) => ({
+    event: rule.event,
+    conditions: { all: [{ ...rule.rule }] },
+  }));
+  console.log(formattedRules);
+  return new Engine(formattedRules);
 };
 
-const execStreamWithRules = async (body: Stream) => {
-  const rules = await getRulesBy("", "");
-  const engine = setupRuleEngine();
+const execStreamWithRules = async (
+  body: Stream,
+  merchantId: string,
+  partnerId: string
+) => {
+  const rules = await getRulesBy(merchantId, partnerId);
+  const engine = setupRuleEngine(rules);
   const streamOutput: { data: any[]; total: number } = await new Promise(
     (resolve, _) => {
       const data: any = [];
@@ -87,10 +65,8 @@ const lambdaHandler = async ({
 
   const id = pathParameters.id;
   const item = await getItemById(id);
-
   const s3Object = await getS3Object(item.s3Key);
-  await execStreamWithRules(s3Object.Body);
-
+  await execStreamWithRules(s3Object.Body, item.merchantId, item.partnerId);
   return {
     statusCode: 200,
     body: JSON.stringify({ data: {} }),
