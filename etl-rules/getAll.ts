@@ -16,7 +16,8 @@ const lambdaHandler = async ({
     params = new QueryCommand({
       TableName: Config.TABLE_NAME,
       IndexName: Config.MERCHANTID_INDEX,
-      FilterExpression: "merchantId=:merchantId AND partnerId=:partnerId",
+      KeyConditionExpression: "merchantId=:merchantId",
+      FilterExpression: " partnerId=:partnerId",
       ExpressionAttributeValues: {
         ":merchantId": { S: queryStringParameters.merchantId },
         ":partnerId": { S: queryStringParameters.partnerId },
