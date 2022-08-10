@@ -33,7 +33,7 @@ const lambdaHandler = async ({
   await ddbClient.send(params);
   return {
     statusCode: 200,
-    body: "{}",
+    body: JSON.stringify({ data: {} }),
   };
 };
 

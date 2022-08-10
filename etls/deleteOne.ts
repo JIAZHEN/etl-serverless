@@ -27,7 +27,7 @@ const lambdaHandler = async (
 
   return {
     statusCode: 200,
-    body: "{}",
+    body: JSON.stringify({ data: {} }),
   };
 };
 

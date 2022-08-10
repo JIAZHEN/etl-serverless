@@ -21,6 +21,8 @@
     "aws-sdk": "*",
     "fast-csv": "^4.3.6",
     "http-errors": "^2.0.0",
+    "json-rules-engine": "^6.1.2",
+    "node-fetch": "^3.2.10",
     "uuid": "*"
   }
 }
