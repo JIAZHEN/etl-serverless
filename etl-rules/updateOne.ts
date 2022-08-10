@@ -5,6 +5,7 @@ import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { MerchantRule } from "./types";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
+import { marshall } from "@aws-sdk/util-dynamodb";
 
 const lambdaHandler = async ({
   body,
@@ -21,12 +22,12 @@ const lambdaHandler = async ({
     TableName: Config.TABLE_NAME,
     Key: { uuid: { S: pathParameters.id } },
     UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,rule=:rule,updatedAt=:updatedAt`,
-    ExpressionAttributeValues: {
-      ":merchantId": { S: body.merchantId },
-      ":partnerId": { S: body.partnerId },
-      ":rule": { S: body.rule },
-      ":updatedAt": { S: new Date().toUTCString() },
-    },
+    ExpressionAttributeValues: marshall({
+      ":merchantId": body.merchantId,
+      ":partnerId": body.partnerId,
+      ":rule": body.rule,
+      ":updatedAt": new Date().toUTCString(),
+    }),
     ReturnValues: "UPDATED_NEW",
   });
 
