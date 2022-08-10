@@ -18,9 +18,8 @@ const getRulesBy = async (merchantId: string, partnerId: string) => {
   return await response.json();
 };
 
-const execStreamWithRules = async (body: Stream) => {
-  const rules = await getRulesBy("", "");
-  const engine = new Engine([
+const setupRuleEngine = () => {
+  return new Engine([
     {
       conditions: {
         all: [
@@ -29,11 +28,6 @@ const execStreamWithRules = async (body: Stream) => {
             operator: "equal",
             value: "mitch.flaherty@gmail.com",
           },
-          {
-            fact: "email",
-            operator: "contains",
-            value: "contains",
-          },
         ],
       },
       event: {
@@ -41,17 +35,43 @@ const execStreamWithRules = async (body: Stream) => {
         params: {},
       },
     },
+    {
+      conditions: {
+        all: [
+          {
+            fact: "id",
+            operator: "equal",
+            value: "13166",
+          },
+        ],
+      },
+      event: {
+        type: "row-invalid",
+        params: {},
+      },
+    },
   ]);
+};
 
-  body
-    .pipe(csv.parse({ headers: true }))
-    .on("error", (error: any) => console.error(error))
-    .on("data", (row: any) => {
-      engine.run(row).then(({ events }) => {
-        events.map((event) => console.log(`${row.email} is ${event.type}`));
-      });
-    })
-    .on("end", (rowCount: number) => console.log(`Parsed ${rowCount} rows`));
+const execStreamWithRules = async (body: Stream) => {
+  const rules = await getRulesBy("", "");
+  const engine = setupRuleEngine();
+  const streamOutput: { data: any[]; total: number } = await new Promise(
+    (resolve, _) => {
+      const data: any = [];
+      body
+        .pipe(csv.parse({ headers: true }))
+        .on("data", async (row) => {
+          const { events } = await engine.run(row);
+          data.push(events);
+        })
+        .on("end", (rowCount: number) =>
+          resolve({ data: data, total: rowCount })
+        );
+    }
+  );
+  const result = await Promise.all(streamOutput.data);
+  console.log(streamOutput.total, result);
 };
 
 const lambdaHandler = async ({
