@@ -10,11 +10,13 @@ import * as csv from "@fast-csv/parse";
 import fetch from "node-fetch";
 import { Engine } from "json-rules-engine";
 import { Stream } from "stream";
+import { URLSearchParams } from "url";
 
 const rulesUrl = `https://${Config.RULES_API_GATEWAY_ID}.execute-api.${Config.REGION}.amazonaws.com/prod`;
 
 const getRulesBy = async (merchantId: string, partnerId: string) => {
-  const response = await fetch(`${rulesUrl}/etl-rules`);
+  const query = new URLSearchParams({ merchantId, partnerId });
+  const response = await fetch(`${rulesUrl}/etl-rules?${query}`);
   return await response.json();
 };
 
