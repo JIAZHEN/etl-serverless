@@ -1,11 +1,5 @@
 import { APIGatewayProxyResult } from "aws-lambda";
-import {
-  Config,
-  getS3Object,
-  createS3UploadWithStream,
-  uploadS3File,
-  getTransformedS3Key,
-} from "./util";
+import { Config, getS3Object, uploadS3File, getTransformedS3Key } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { MerchantRule } from "../etl-rules/types";
@@ -121,7 +115,7 @@ const lambdaHandler = async ({
   });
   return {
     statusCode: 200,
-    body: JSON.stringify(etlResult),
+    body: JSON.stringify({ data: etlResult }),
   };
 };
 

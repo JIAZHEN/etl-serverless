@@ -5,8 +5,6 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
-import { CsvFormatterStream, Row } from "@fast-csv/format";
-import { Upload } from "@aws-sdk/lib-storage";
 import path from "path";
 
 export const ddbClient = new DynamoDBClient({});
@@ -33,24 +31,6 @@ export const uploadS3File = async (s3Key: string, bodyContent: Buffer) => {
 export const getTransformedS3Key = (s3Key: string) => {
   const { dir, name, ext } = path.parse(s3Key);
   return `${dir}/${name}-transformed${ext}`;
-};
-
-export const createS3UploadWithStream = (
-  originS3Key: string,
-  stream: CsvFormatterStream<Row, Row>
-) => {
-  const formattedS3Key = getTransformedS3Key(originS3Key);
-  return new Upload({
-    client: s3Client,
-    queueSize: 1,
-    partSize: 1024 * 1024 * 5,
-    leavePartsOnError: false,
-    params: {
-      Bucket: Config.CORE_BUCKET,
-      Key: formattedS3Key,
-      Body: stream,
-    },
-  });
 };
 
 export const deleteS3Object = async (s3Key: string) => {
