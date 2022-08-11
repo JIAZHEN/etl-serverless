@@ -7,20 +7,10 @@ import { UnprocessableEntity } from "http-errors";
 import { Etl } from "./types";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 
-const lambdaHandler = async ({
-  body,
-  pathParameters,
-}: {
-  body: Etl;
-  pathParameters: any;
-}): Promise<APIGatewayProxyResult> => {
-  if (!pathParameters?.id) {
-    throw new UnprocessableEntity();
-  }
-
+export const updateEtlCore = async (body: any) => {
   const params: any = new UpdateItemCommand({
     TableName: Config.TABLE_NAME,
-    Key: { id: { S: pathParameters.id } },
+    Key: { id: { S: body.id } },
     UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,etlResult=:etlResult,updatedAt=:updatedAt,etlStatus=:etlStatus`,
     ExpressionAttributeValues: marshall({
       ":merchantId": body.merchantId,
@@ -33,6 +23,21 @@ const lambdaHandler = async ({
   });
 
   await ddbClient.send(params);
+  return body;
+};
+
+const lambdaHandler = async ({
+  body,
+  pathParameters,
+}: {
+  body: Etl;
+  pathParameters: any;
+}): Promise<APIGatewayProxyResult> => {
+  if (!pathParameters?.id) {
+    throw new UnprocessableEntity();
+  }
+
+  await updateEtlCore(body);
   return {
     statusCode: 200,
     body: JSON.stringify({ data: {} }),

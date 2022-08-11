@@ -20,3 +20,10 @@ export interface Etl {
   };
   [key: string]: any;
 }
+
+export interface RuleEvent {
+  type: string;
+  params: {
+    [key: string]: any;
+  };
+}

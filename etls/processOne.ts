@@ -1,11 +1,11 @@
-import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config, getS3Object } from "./util";
-import { marshall } from "@aws-sdk/util-dynamodb";
+import { Config, getS3Object } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { MerchantRule } from "../etl-rules/types";
+import { RuleEvent } from "./types";
 import { getItemById } from "./getOne";
+import { updateEtlCore } from "./updateOne";
 import * as csv from "@fast-csv/parse";
 import fetch from "node-fetch";
 import { Engine } from "json-rules-engine";
@@ -25,7 +25,6 @@ const setupRuleEngine = (rules: MerchantRule[]) => {
     event: rule.event,
     conditions: { all: [{ ...rule.rule }] },
   }));
-  console.log(formattedRules);
   return new Engine(formattedRules);
 };
 
@@ -36,8 +35,8 @@ const execStreamWithRules = async (
 ) => {
   const rules = await getRulesBy(merchantId, partnerId);
   const engine = setupRuleEngine(rules);
-  const streamOutput: { data: any[]; total: number } = await new Promise(
-    (resolve, _) => {
+  const streamOutput: { data: Array<RuleEvent[]>; total: number } =
+    await new Promise((resolve, _) => {
       const data: any = [];
       body
         .pipe(csv.parse({ headers: true }))
@@ -48,11 +47,31 @@ const execStreamWithRules = async (
         .on("end", (rowCount: number) =>
           resolve({ data: data, total: rowCount })
         );
-    }
-  );
+    });
   const result = await Promise.all(streamOutput.data);
   return { data: result, total: streamOutput.total };
 };
+
+const aggEtlResult = ({
+  events,
+  total,
+}: {
+  events: RuleEvent[];
+  total: number;
+}) =>
+  events.reduce(
+    (result, event) => {
+      event.params.consequence === "row-valid"
+        ? (result.valid += 1)
+        : (result.invalid += 1);
+      return result;
+    },
+    {
+      total: total,
+      valid: 0,
+      invalid: 0,
+    }
+  );
 
 const lambdaHandler = async ({
   pathParameters,
@@ -63,17 +82,26 @@ const lambdaHandler = async ({
     throw new UnprocessableEntity();
   }
 
-  const id = pathParameters.id;
-  const item = await getItemById(id);
-  const s3Object = await getS3Object(item.s3Key);
-  const result = await execStreamWithRules(
+  const coreItem = await getItemById(pathParameters.id);
+  await updateEtlCore({ ...coreItem, etlStatus: "processing" });
+  const s3Object = await getS3Object(coreItem.s3Key);
+  const outputs = await execStreamWithRules(
     s3Object.Body,
-    item.merchantId,
-    item.partnerId
+    coreItem.merchantId,
+    coreItem.partnerId
   );
+  const etlResult = aggEtlResult({
+    events: outputs.data.flat(),
+    total: outputs.total,
+  });
+  await updateEtlCore({
+    ...coreItem,
+    etlResult: etlResult,
+    etlStatus: "success",
+  });
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: result }),
+    body: JSON.stringify(etlResult),
   };
 };
 
