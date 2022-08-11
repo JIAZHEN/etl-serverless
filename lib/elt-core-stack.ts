@@ -63,7 +63,7 @@ export class EtlCoreStack extends Stack {
     coreTable.grantReadData(getOneLambda);
     coreTable.grantReadWriteData(deleteOneLambda);
     coreTable.grantReadWriteData(updateOneLambda);
-    coreTable.grantReadData(processOneLambda);
+    coreTable.grantReadWriteData(processOneLambda);
     coreBucket.grantReadWrite(createLambda);
     coreBucket.grantReadWrite(deleteOneLambda);
     coreBucket.grantRead(processOneLambda);
