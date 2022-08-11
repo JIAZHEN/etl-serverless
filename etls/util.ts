@@ -25,12 +25,12 @@ export const uploadS3File = async (s3Key: string, bodyContent: Buffer) => {
     Key: s3Key,
     Body: bodyContent,
   };
-  console.log(`Uploading file ${s3Key}`);
+  console.info(`Uploading file ${s3Key}`);
   await s3Client.send(new PutObjectCommand(params));
-  console.log(`Uploaded file ${s3Key}`);
+  console.info(`Uploaded file ${s3Key}`);
 };
 
-const getTransformedS3Key = (s3Key: string) => {
+export const getTransformedS3Key = (s3Key: string) => {
   const { dir, name, ext } = path.parse(s3Key);
   return `${dir}/${name}-transformed${ext}`;
 };
@@ -42,7 +42,8 @@ export const createS3UploadWithStream = (
   const formattedS3Key = getTransformedS3Key(originS3Key);
   return new Upload({
     client: s3Client,
-    queueSize: 4,
+    queueSize: 1,
+    partSize: 1024 * 1024 * 5,
     leavePartsOnError: false,
     params: {
       Bucket: Config.CORE_BUCKET,
