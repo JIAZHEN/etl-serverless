@@ -5,6 +5,9 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { CsvFormatterStream, Row } from "@fast-csv/format";
+import { Upload } from "@aws-sdk/lib-storage";
+import path from "path";
 
 export const ddbClient = new DynamoDBClient({});
 export const s3Client = new S3Client({});
@@ -16,13 +19,37 @@ export const Config = {
   REGION: process.env.REGION,
 };
 
-export const uploadFile = async (s3Key: string, bodyContent: Buffer) => {
+export const uploadS3File = async (s3Key: string, bodyContent: Buffer) => {
   const params = {
     Bucket: Config.CORE_BUCKET,
     Key: s3Key,
     Body: bodyContent,
   };
-  return await s3Client.send(new PutObjectCommand(params));
+  console.log(`Uploading file ${s3Key}`);
+  await s3Client.send(new PutObjectCommand(params));
+  console.log(`Uploaded file ${s3Key}`);
+};
+
+const getTransformedS3Key = (s3Key: string) => {
+  const { dir, name, ext } = path.parse(s3Key);
+  return `${dir}/${name}-transformed${ext}`;
+};
+
+export const createS3UploadWithStream = (
+  originS3Key: string,
+  stream: CsvFormatterStream<Row, Row>
+) => {
+  const formattedS3Key = getTransformedS3Key(originS3Key);
+  return new Upload({
+    client: s3Client,
+    queueSize: 4,
+    leavePartsOnError: false,
+    params: {
+      Bucket: Config.CORE_BUCKET,
+      Key: formattedS3Key,
+      Body: stream,
+    },
+  });
 };
 
 export const deleteS3Object = async (s3Key: string) => {

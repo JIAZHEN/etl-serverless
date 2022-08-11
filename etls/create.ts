@@ -2,7 +2,7 @@ import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayProxyResult } from "aws-lambda";
 import { EtlCreateInput } from "./types";
-import { ddbClient, Config, uploadFile, etlStatus } from "./util";
+import { ddbClient, Config, uploadS3File, etlStatus } from "./util";
 import { v4 as uuidv4 } from "uuid";
 import { withDefaultMiddy } from "./middleware";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
@@ -26,7 +26,7 @@ const lambdaHandler = async ({
   body: EtlCreateInput;
 }): Promise<APIGatewayProxyResult> => {
   const s3Key = getS3KeyFromInput(body);
-  await uploadFile(s3Key, body.partnerFile.content);
+  await uploadS3File(s3Key, body.partnerFile.content);
 
   delete body.partnerFile; // remove uploaded file
   const timeUtc = new Date().toUTCString();

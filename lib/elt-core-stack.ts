@@ -66,7 +66,7 @@ export class EtlCoreStack extends Stack {
     coreTable.grantReadWriteData(processOneLambda);
     coreBucket.grantReadWrite(createLambda);
     coreBucket.grantReadWrite(deleteOneLambda);
-    coreBucket.grantRead(processOneLambda);
+    coreBucket.grantReadWrite(processOneLambda);
 
     const api = this.createApi();
     const etls = api.root.addResource("etls");
