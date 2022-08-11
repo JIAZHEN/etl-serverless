@@ -52,6 +52,7 @@ const execStreamWithRules = async (
   return { data: result, total: streamOutput.total };
 };
 
+// by default each row should be rejected
 const aggEtlResult = ({
   rows,
   total,
@@ -62,14 +63,18 @@ const aggEtlResult = ({
   rows.reduce(
     (result, rowEvents) => {
       let validRow = true;
-      rowEvents.forEach((event) => {
-        if (validRow && event.params.consequence === "row-invalid")
-          validRow = false;
+      if (rowEvents.length === 0) {
+        validRow = false;
+      } else {
+        rowEvents.forEach((event) => {
+          if (validRow && event.params.consequence === "row-invalid")
+            validRow = false;
 
-        const details: { [key: string]: any } = result.details;
-        details[event.type] ||= 0;
-        details[event.type] += 1;
-      });
+          const details: { [key: string]: any } = result.details;
+          details[event.type] ||= 0;
+          details[event.type] += 1;
+        });
+      }
       validRow ? (result.valid += 1) : (result.invalid += 1);
       return result;
     },
