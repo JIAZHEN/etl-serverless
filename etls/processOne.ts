@@ -53,23 +53,31 @@ const execStreamWithRules = async (
 };
 
 const aggEtlResult = ({
-  events,
+  rows,
   total,
 }: {
-  events: RuleEvent[];
+  rows: Array<RuleEvent[]>;
   total: number;
 }) =>
-  events.reduce(
-    (result, event) => {
-      event.params.consequence === "row-valid"
-        ? (result.valid += 1)
-        : (result.invalid += 1);
+  rows.reduce(
+    (result, rowEvents) => {
+      let validRow = true;
+      rowEvents.forEach((event) => {
+        if (validRow && event.params.consequence === "row-invalid")
+          validRow = false;
+
+        const details: { [key: string]: any } = result.details;
+        details[event.type] ||= 0;
+        details[event.type] += 1;
+      });
+      validRow ? (result.valid += 1) : (result.invalid += 1);
       return result;
     },
     {
       total: total,
       valid: 0,
       invalid: 0,
+      details: {},
     }
   );
 
@@ -91,7 +99,7 @@ const lambdaHandler = async ({
     coreItem.partnerId
   );
   const etlResult = aggEtlResult({
-    events: outputs.data.flat(),
+    rows: outputs.data,
     total: outputs.total,
   });
   await updateEtlCore({
