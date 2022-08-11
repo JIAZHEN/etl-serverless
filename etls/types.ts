@@ -6,18 +6,22 @@ export interface EtlCreateInput {
   etlStatus: string;
 }
 
+export interface EtlResult {
+  total: number;
+  valid: number;
+  invalid: number;
+  details: {
+    [key: string]: any;
+  };
+}
+
 export interface Etl {
   merchantId: string;
   partnerId: string;
   id: string;
   s3Key: string;
   etlStatus: string;
-  etlResult: {
-    total: number;
-    valid: number;
-    invalid: number;
-    [key: string]: any;
-  };
+  etlResult: EtlResult;
   [key: string]: any;
 }
 

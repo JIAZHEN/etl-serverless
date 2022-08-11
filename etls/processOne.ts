@@ -3,7 +3,7 @@ import { Config, getS3Object } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { MerchantRule } from "../etl-rules/types";
-import { RuleEvent } from "./types";
+import { EtlResult } from "./types";
 import { getItemById } from "./getOne";
 import { updateEtlCore } from "./updateOne";
 import * as csv from "@fast-csv/parse";
@@ -28,6 +28,24 @@ const setupRuleEngine = (rules: MerchantRule[]) => {
   return new Engine(formattedRules);
 };
 
+const rowProcessor = async (row: any, engine: Engine, etlResult: EtlResult) => {
+  const { events } = await engine.run(row);
+  let validRow = true;
+  if (events.length === 0) {
+    validRow = false;
+  } else {
+    events.forEach((event) => {
+      if (validRow && event?.params?.consequence === "row-invalid")
+        validRow = false;
+
+      const details: { [key: string]: any } = etlResult.details;
+      details[event.type] ||= 0;
+      details[event.type] += 1;
+    });
+  }
+  validRow ? (etlResult.valid += 1) : (etlResult.invalid += 1);
+};
+
 const execStreamWithRules = async (
   body: Stream,
   merchantId: string,
@@ -35,56 +53,23 @@ const execStreamWithRules = async (
 ) => {
   const rules = await getRulesBy(merchantId, partnerId);
   const engine = setupRuleEngine(rules);
-  const streamOutput: { data: Array<RuleEvent[]>; total: number } =
-    await new Promise((resolve, _) => {
-      const data: any = [];
-      body
-        .pipe(csv.parse({ headers: true }))
-        .on("data", async (row) => {
-          const { events } = await engine.run(row);
-          data.push(events);
-        })
-        .on("end", (rowCount: number) =>
-          resolve({ data: data, total: rowCount })
-        );
-    });
-  const result = await Promise.all(streamOutput.data);
-  return { data: result, total: streamOutput.total };
-};
-
-// by default each row should be rejected
-const aggEtlResult = ({
-  rows,
-  total,
-}: {
-  rows: Array<RuleEvent[]>;
-  total: number;
-}) =>
-  rows.reduce(
-    (result, rowEvents) => {
-      let validRow = true;
-      if (rowEvents.length === 0) {
-        validRow = false;
-      } else {
-        rowEvents.forEach((event) => {
-          if (validRow && event.params.consequence === "row-invalid")
-            validRow = false;
-
-          const details: { [key: string]: any } = result.details;
-          details[event.type] ||= 0;
-          details[event.type] += 1;
-        });
-      }
-      validRow ? (result.valid += 1) : (result.invalid += 1);
-      return result;
-    },
-    {
-      total: total,
+  const streamOutput: EtlResult = await new Promise((resolve, _) => {
+    const etlResult: EtlResult = {
+      total: 0,
       valid: 0,
       invalid: 0,
       details: {},
-    }
-  );
+    };
+    body
+      .pipe(csv.parse({ headers: true }))
+      .on("data", async (row) => await rowProcessor(row, engine, etlResult))
+      .on("end", (rowCount: number) =>
+        resolve({ ...etlResult, total: rowCount })
+      );
+  });
+  const etlResult = await Promise.resolve(streamOutput);
+  return etlResult;
+};
 
 const lambdaHandler = async ({
   pathParameters,
@@ -98,15 +83,11 @@ const lambdaHandler = async ({
   const coreItem = await getItemById(pathParameters.id);
   await updateEtlCore({ ...coreItem, etlStatus: "processing" });
   const s3Object = await getS3Object(coreItem.s3Key);
-  const outputs = await execStreamWithRules(
+  const etlResult = await execStreamWithRules(
     s3Object.Body,
     coreItem.merchantId,
     coreItem.partnerId
   );
-  const etlResult = aggEtlResult({
-    rows: outputs.data,
-    total: outputs.total,
-  });
   await updateEtlCore({
     ...coreItem,
     etlResult: etlResult,
