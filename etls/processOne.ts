@@ -51,7 +51,7 @@ const execStreamWithRules = async (
     }
   );
   const result = await Promise.all(streamOutput.data);
-  console.log(streamOutput.total, result);
+  return { data: result, total: streamOutput.total };
 };
 
 const lambdaHandler = async ({
@@ -66,10 +66,14 @@ const lambdaHandler = async ({
   const id = pathParameters.id;
   const item = await getItemById(id);
   const s3Object = await getS3Object(item.s3Key);
-  await execStreamWithRules(s3Object.Body, item.merchantId, item.partnerId);
+  const result = await execStreamWithRules(
+    s3Object.Body,
+    item.merchantId,
+    item.partnerId
+  );
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: {} }),
+    body: JSON.stringify({ data: result }),
   };
 };
 

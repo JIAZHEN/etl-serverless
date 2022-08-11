@@ -21,20 +21,24 @@ const lambdaHandler = async ({
   const params: any = new UpdateItemCommand({
     TableName: Config.TABLE_NAME,
     Key: { uuid: { S: pathParameters.id } },
-    UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,rule=:rule,updatedAt=:updatedAt`,
+    UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,#mrule=:rulevalue,updatedAt=:updatedAt,event=:event`,
     ExpressionAttributeValues: marshall({
       ":merchantId": body.merchantId,
       ":partnerId": body.partnerId,
-      ":rule": body.rule,
+      ":rulevalue": body.rule,
+      ":event": body.event,
       ":updatedAt": new Date().toUTCString(),
     }),
+    ExpressionAttributeNames: {
+      "#mrule": "rule",
+    },
     ReturnValues: "UPDATED_NEW",
   });
 
   await ddbClient.send(params);
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: {} }),
+    body: JSON.stringify({ data: body }),
   };
 };
 
