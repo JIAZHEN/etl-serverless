@@ -1,4 +1,4 @@
-import { Stack, StackProps, RemovalPolicy } from "aws-cdk-lib";
+import { Stack, StackProps, RemovalPolicy, Duration } from "aws-cdk-lib";
 import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import {
@@ -9,6 +9,8 @@ import { Construct } from "constructs";
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 const lambdaPath = join(__dirname, "../etls");
 
@@ -68,6 +70,7 @@ export class EtlCoreStack extends Stack {
     coreBucket.grantReadWrite(deleteOneLambda);
     coreBucket.grantReadWrite(processOneLambda);
 
+    // API Gateway + Lambda
     const api = this.createApi();
     const etls = api.root.addResource("etls");
     etls.addMethod("POST", new LambdaIntegration(createLambda));
@@ -78,6 +81,27 @@ export class EtlCoreStack extends Stack {
     etl.addMethod("PUT", new LambdaIntegration(updateOneLambda));
     const etlProcess = etl.addResource("process");
     etlProcess.addMethod("POST", new LambdaIntegration(processOneLambda));
+
+    // SQS Lambda
+    const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
+      entry: `${lambdaPath}/processEtl.ts`,
+      ...nodeJsFunctionProps,
+    });
+    // SQL with dead letter queue
+    const etlQueueName = "etl-to-process-queue";
+    const etlToProcessQueue = new sqs.Queue(this, etlQueueName, {
+      deadLetterQueue: {
+        queue: new sqs.Queue(this, `${etlQueueName}-dlq`, {
+          retentionPeriod: Duration.minutes(10),
+        }),
+        maxReceiveCount: 1,
+      },
+    });
+    processEtlLambda.addEventSource(
+      new SqsEventSource(etlToProcessQueue, {
+        batchSize: 10,
+      })
+    );
   }
 
   private createEtlCoreTable = () => {
