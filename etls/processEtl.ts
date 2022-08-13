@@ -12,11 +12,9 @@ import { URLSearchParams } from "url";
 import fs from "fs";
 import { SQSEvent } from "aws-lambda";
 
-const rulesUrl = `https://${Config.RULES_API_GATEWAY_ID}.execute-api.${Config.REGION}.amazonaws.com/prod`;
-
 const getRulesBy = async (merchantId: string, partnerId: string) => {
   const query = new URLSearchParams({ merchantId, partnerId });
-  const response = await fetch(`${rulesUrl}/etl-rules?${query}`);
+  const response = await fetch(`${Config.RULES_API_URL}/etl-rules?${query}`);
   return (await response.json()) as MerchantRule[];
 };
 

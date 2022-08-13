@@ -42,7 +42,7 @@ export class EtlCoreStack extends Stack {
       TABLE_NAME: coreTable.tableName,
       CORE_BUCKET: coreBucket.bucketName,
       ETL_TO_PROCESS_QUEUE_URL: etlToProcessQueue.queueUrl,
-      RULES_API_GATEWAY_ID: props?.rulesGateway?.restApiId || "",
+      RULES_API_URL: props?.rulesGateway?.url || "",
       REGION: process.env.CDK_DEFAULT_REGION || "",
     });
 
