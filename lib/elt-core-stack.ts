@@ -81,9 +81,10 @@ export class EtlCoreStack extends Stack {
     coreTable.grantReadWriteData(deleteOneLambda);
     coreTable.grantReadWriteData(updateOneLambda);
     coreTable.grantReadWriteData(processOneLambda);
+    coreTable.grantReadWriteData(processEtlLambda);
     coreBucket.grantReadWrite(createLambda);
     coreBucket.grantReadWrite(deleteOneLambda);
-    coreBucket.grantReadWrite(processOneLambda);
+    coreBucket.grantReadWrite(processEtlLambda);
 
     // API Gateway + Lambda
     const api = this.createApi();
