@@ -1,4 +1,5 @@
 import { APIGatewayProxyResult } from "aws-lambda";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { Config, getS3Object, uploadS3File, getTransformedS3Key } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
@@ -13,6 +14,8 @@ import { Engine } from "json-rules-engine";
 import { Stream } from "stream";
 import { URLSearchParams } from "url";
 import fs from "fs";
+
+const sqsClient = new SQSClient({});
 
 const rulesUrl = `https://${Config.RULES_API_GATEWAY_ID}.execute-api.${Config.REGION}.amazonaws.com/prod`;
 
@@ -106,6 +109,12 @@ const lambdaHandler = async ({
 
   const coreItem = await getItemById(pathParameters.id);
   await updateEtlCore({ ...coreItem, etlStatus: "processing" });
+  await sqsClient.send(
+    new SendMessageCommand({
+      MessageBody: JSON.stringify(coreItem),
+      QueueUrl: Config.ETL_TO_PROCESS_QUEUE_URL,
+    })
+  );
   const s3Object = await getS3Object(coreItem.s3Key);
   const etlResult = await execStreamWithRules(s3Object.Body, coreItem as Etl);
   await updateEtlCore({

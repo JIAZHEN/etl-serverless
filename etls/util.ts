@@ -15,6 +15,7 @@ export const Config = {
   CORE_BUCKET: process.env.CORE_BUCKET,
   RULES_API_GATEWAY_ID: process.env.RULES_API_GATEWAY_ID,
   REGION: process.env.REGION,
+  ETL_TO_PROCESS_QUEUE_URL: process.env.ETL_TO_PROCESS_QUEUE_URL,
 };
 
 export const uploadS3File = async (s3Key: string, bodyContent: Buffer) => {

@@ -27,10 +27,21 @@ export class EtlCoreStack extends Stack {
       publicReadAccess: false,
     });
     const coreTable = this.createEtlCoreTable();
+    // SQL with dead letter queue
+    const etlQueueName = "etl-to-process-queue";
+    const etlToProcessQueue = new sqs.Queue(this, etlQueueName, {
+      deadLetterQueue: {
+        queue: new sqs.Queue(this, `${etlQueueName}-dlq`, {
+          retentionPeriod: Duration.minutes(10),
+        }),
+        maxReceiveCount: 1,
+      },
+    });
 
     const nodeJsFunctionProps = this.createLambdaProps({
       TABLE_NAME: coreTable.tableName,
       CORE_BUCKET: coreBucket.bucketName,
+      ETL_TO_PROCESS_QUEUE_URL: etlToProcessQueue.queueUrl,
       RULES_API_GATEWAY_ID: props?.rulesGateway?.restApiId || "",
       REGION: process.env.CDK_DEFAULT_REGION || "",
     });
@@ -59,6 +70,10 @@ export class EtlCoreStack extends Stack {
       entry: `${lambdaPath}/processOne.ts`,
       ...nodeJsFunctionProps,
     });
+    const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
+      entry: `${lambdaPath}/processEtl.ts`,
+      ...nodeJsFunctionProps,
+    });
 
     coreTable.grantReadWriteData(createLambda);
     coreTable.grantReadData(getAllLambda);
@@ -81,27 +96,13 @@ export class EtlCoreStack extends Stack {
     etl.addMethod("PUT", new LambdaIntegration(updateOneLambda));
     const etlProcess = etl.addResource("process");
     etlProcess.addMethod("POST", new LambdaIntegration(processOneLambda));
-
-    // SQS Lambda
-    const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
-      entry: `${lambdaPath}/processEtl.ts`,
-      ...nodeJsFunctionProps,
-    });
-    // SQL with dead letter queue
-    const etlQueueName = "etl-to-process-queue";
-    const etlToProcessQueue = new sqs.Queue(this, etlQueueName, {
-      deadLetterQueue: {
-        queue: new sqs.Queue(this, `${etlQueueName}-dlq`, {
-          retentionPeriod: Duration.minutes(10),
-        }),
-        maxReceiveCount: 1,
-      },
-    });
+    // SQS lambda
     processEtlLambda.addEventSource(
       new SqsEventSource(etlToProcessQueue, {
         batchSize: 10,
       })
     );
+    etlToProcessQueue.grantSendMessages(processOneLambda);
   }
 
   private createEtlCoreTable = () => {
