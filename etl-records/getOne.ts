@@ -7,7 +7,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 export const getItemById = async (id: string) => {
   const params = new GetItemCommand({
-    TableName: Config.TABLE_NAME,
+    TableName: Config.RECORDS_TABLE_NAME,
     Key: { id: { S: id } },
   });
   const data = await ddbClient.send(params);

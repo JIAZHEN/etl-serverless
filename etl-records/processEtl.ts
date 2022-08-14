@@ -1,8 +1,8 @@
 import { Config } from "./util";
 import { getS3Object, uploadS3File, getTransformedS3Key } from "./s3";
 import { MerchantRule } from "../etl-rules/types";
-import { EtlResult, Etl } from "./types";
-import { updateEtlCore } from "./updateOne";
+import { EtlResult, EtlRecord } from "./types";
+import { updateEtlRecord } from "./updateOne";
 import { parse } from "@fast-csv/parse";
 import { format, CsvFormatterStream, Row } from "@fast-csv/format";
 import fetch from "node-fetch";
@@ -55,8 +55,8 @@ const rowProcessor = async (
   }
 };
 
-const execStreamWithRules = async (body: Stream, coreItem: Etl) => {
-  const rules = await getRulesBy(coreItem.merchantId, coreItem.partnerId);
+const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
+  const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
   const engine = setupRuleEngine(rules);
   const csvFile = fs.createWriteStream("/tmp/random.csv");
   const stream = format({ headers: true });
@@ -85,7 +85,7 @@ const execStreamWithRules = async (body: Stream, coreItem: Etl) => {
   const etlResult = await Promise.resolve(streamOutput);
 
   await uploadS3File(
-    getTransformedS3Key(coreItem.s3Key),
+    getTransformedS3Key(etlRecord.s3Key),
     fs.readFileSync("/tmp/random.csv")
   );
   return etlResult;
@@ -93,16 +93,19 @@ const execStreamWithRules = async (body: Stream, coreItem: Etl) => {
 
 export const handler = async (event: SQSEvent): Promise<void> => {
   const messages = event.Records.map(async (record) => {
-    const coreItem = JSON.parse(record.body);
-    const s3Object = await getS3Object(coreItem.s3Key);
-    const etlResult = await execStreamWithRules(s3Object.Body, coreItem as Etl);
-    await updateEtlCore({
-      ...coreItem,
+    const etlRecord = JSON.parse(record.body);
+    const s3Object = await getS3Object(etlRecord.s3Key);
+    const etlResult = await execStreamWithRules(
+      s3Object.Body,
+      etlRecord as EtlRecord
+    );
+    await updateEtlRecord({
+      ...etlRecord,
       etlResult: etlResult,
       etlStatus: "success",
     });
-    console.log("Successfully processed event", coreItem);
-    return coreItem;
+    console.log("Successfully processed event", etlRecord);
+    return etlRecord;
   });
 
   await Promise.all(messages);

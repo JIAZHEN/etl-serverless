@@ -12,21 +12,21 @@ import { join } from "path";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
-const lambdaPath = join(__dirname, "../etls");
+const lambdaPath = join(__dirname, "../etl-records");
 
-interface EtlCoreStackProps extends StackProps {
+interface EtlRecordsStackProps extends StackProps {
   rulesGateway: RestApi;
 }
 
-export class EtlCoreStack extends Stack {
-  constructor(scope: Construct, id: string, props?: EtlCoreStackProps) {
+export class EtlRecordsStack extends Stack {
+  constructor(scope: Construct, id: string, props?: EtlRecordsStackProps) {
     super(scope, id, props);
-    const coreBucket = new Bucket(this, "etl-core", {
+    const recordsBucket = new Bucket(this, "etl-records", {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       publicReadAccess: false,
     });
-    const coreTable = this.createEtlCoreTable();
+    const recordsTable = this.createEtlRecordsTable();
     // SQL with dead letter queue
     const etlQueueName = "etl-to-process-queue";
     const etlToProcessQueue = new sqs.Queue(this, etlQueueName, {
@@ -39,8 +39,8 @@ export class EtlCoreStack extends Stack {
     });
 
     const nodeJsFunctionProps = this.createLambdaProps({
-      TABLE_NAME: coreTable.tableName,
-      CORE_BUCKET: coreBucket.bucketName,
+      RECORDS_TABLE_NAME: recordsTable.tableName,
+      RECORDS_BUCKET_NAME: recordsBucket.bucketName,
       ETL_TO_PROCESS_QUEUE_URL: etlToProcessQueue.queueUrl,
       RULES_API_URL: props?.rulesGateway?.url || "",
       REGION: process.env.CDK_DEFAULT_REGION || "",
@@ -68,29 +68,27 @@ export class EtlCoreStack extends Stack {
     });
     const processOneLambda = new NodejsFunction(this, "processOneFunction", {
       entry: `${lambdaPath}/processOne.ts`,
-      timeout: Duration.seconds(10),
       ...nodeJsFunctionProps,
     });
     const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
       entry: `${lambdaPath}/processEtl.ts`,
-      timeout: Duration.minutes(10),
       ...nodeJsFunctionProps,
     });
 
-    coreTable.grantReadWriteData(createLambda);
-    coreTable.grantReadData(getAllLambda);
-    coreTable.grantReadData(getOneLambda);
-    coreTable.grantReadWriteData(deleteOneLambda);
-    coreTable.grantReadWriteData(updateOneLambda);
-    coreTable.grantReadWriteData(processOneLambda);
-    coreTable.grantReadWriteData(processEtlLambda);
-    coreBucket.grantReadWrite(createLambda);
-    coreBucket.grantReadWrite(deleteOneLambda);
-    coreBucket.grantReadWrite(processEtlLambda);
+    recordsTable.grantReadWriteData(createLambda);
+    recordsTable.grantReadData(getAllLambda);
+    recordsTable.grantReadData(getOneLambda);
+    recordsTable.grantReadWriteData(deleteOneLambda);
+    recordsTable.grantReadWriteData(updateOneLambda);
+    recordsTable.grantReadWriteData(processOneLambda);
+    recordsTable.grantReadWriteData(processEtlLambda);
+    recordsBucket.grantReadWrite(createLambda);
+    recordsBucket.grantReadWrite(deleteOneLambda);
+    recordsBucket.grantReadWrite(processEtlLambda);
 
     // API Gateway + Lambda
     const api = this.createApi();
-    const etls = api.root.addResource("etls");
+    const etls = api.root.addResource("etl-records");
     etls.addMethod("POST", new LambdaIntegration(createLambda));
     etls.addMethod("GET", new LambdaIntegration(getAllLambda));
     const etl = etls.addResource("{id}");
@@ -108,9 +106,9 @@ export class EtlCoreStack extends Stack {
     etlToProcessQueue.grantSendMessages(processOneLambda);
   }
 
-  private createEtlCoreTable = () => {
-    const table = new Table(this, `ETL-Service-EtlCore`, {
-      tableName: "EtlCore",
+  private createEtlRecordsTable = () => {
+    const table = new Table(this, `EtlRecords`, {
+      tableName: "EtlRecords",
       partitionKey: {
         name: "id",
         type: AttributeType.STRING,
@@ -120,8 +118,8 @@ export class EtlCoreStack extends Stack {
   };
 
   private createApi = () =>
-    new RestApi(this, "EtlCore API", {
-      restApiName: "EtlCore Service",
+    new RestApi(this, "EtlRecords API", {
+      restApiName: "EtlRecords Service",
       defaultCorsPreflightOptions: {
         allowHeaders: [
           "Content-Type",

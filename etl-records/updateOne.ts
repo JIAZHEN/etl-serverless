@@ -4,12 +4,12 @@ import { ddbClient, Config } from "./util";
 import { marshall } from "@aws-sdk/util-dynamodb";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { Etl } from "./types";
+import { EtlRecord } from "./types";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 
-export const updateEtlCore = async (body: any) => {
+export const updateEtlRecord = async (body: any) => {
   const params: any = new UpdateItemCommand({
-    TableName: Config.TABLE_NAME,
+    TableName: Config.RECORDS_TABLE_NAME,
     Key: { id: { S: body.id } },
     UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,etlResult=:etlResult,updatedAt=:updatedAt,etlStatus=:etlStatus`,
     ExpressionAttributeValues: marshall({
@@ -30,14 +30,14 @@ const lambdaHandler = async ({
   body,
   pathParameters,
 }: {
-  body: Etl;
+  body: EtlRecord;
   pathParameters: any;
 }): Promise<APIGatewayProxyResult> => {
   if (!pathParameters?.id) {
     throw new UnprocessableEntity();
   }
 
-  await updateEtlCore(body);
+  await updateEtlRecord(body);
   return {
     statusCode: 200,
     body: JSON.stringify({ data: body }),

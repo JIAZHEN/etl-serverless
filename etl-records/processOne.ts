@@ -4,7 +4,7 @@ import { Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { getItemById } from "./getOne";
-import { updateEtlCore } from "./updateOne";
+import { updateEtlRecord } from "./updateOne";
 
 const sqsClient = new SQSClient({});
 
@@ -17,11 +17,11 @@ const lambdaHandler = async ({
     throw new UnprocessableEntity();
   }
 
-  const coreItem = await getItemById(pathParameters.id);
-  await updateEtlCore({ ...coreItem, etlStatus: "processing" });
+  const etlRecord = await getItemById(pathParameters.id);
+  await updateEtlRecord({ ...etlRecord, etlStatus: "processing" });
   await sqsClient.send(
     new SendMessageCommand({
-      MessageBody: JSON.stringify(coreItem),
+      MessageBody: JSON.stringify(etlRecord),
       QueueUrl: Config.ETL_TO_PROCESS_QUEUE_URL,
     })
   );

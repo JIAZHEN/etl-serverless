@@ -8,7 +8,7 @@ import { getItemById } from "./getOne";
 
 const deleteDDBItem = async (id: string) => {
   const params = new DeleteItemCommand({
-    TableName: Config.TABLE_NAME,
+    TableName: Config.RECORDS_TABLE_NAME,
     Key: { id: { S: id } },
   });
   return await ddbClient.send(params);

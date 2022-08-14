@@ -1,4 +1,4 @@
-export interface EtlCreateInput {
+export interface EtlRecordCreateInput {
   merchantId: string;
   partnerId: string;
   s3Key: string;
@@ -15,7 +15,7 @@ export interface EtlResult {
   };
 }
 
-export interface Etl {
+export interface EtlRecord {
   merchantId: string;
   partnerId: string;
   id: string;

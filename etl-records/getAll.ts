@@ -7,7 +7,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 const lambdaHandler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const params = new ScanCommand({ TableName: Config.TABLE_NAME });
+  const params = new ScanCommand({ TableName: Config.RECORDS_TABLE_NAME });
   const data = await ddbClient.send(params);
   const formattedItems = data?.Items?.map((item) => unmarshall(item));
   return {
