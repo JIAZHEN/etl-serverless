@@ -3,7 +3,7 @@ import { APIGatewayProxyResult } from "aws-lambda";
 import { ddbClient, Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { MerchantRule } from "./types";
+import { EtlRule } from "./types";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
@@ -11,7 +11,7 @@ const lambdaHandler = async ({
   body,
   pathParameters,
 }: {
-  body: MerchantRule;
+  body: EtlRule;
   pathParameters: any;
 }): Promise<APIGatewayProxyResult> => {
   if (!pathParameters?.id) {
@@ -19,8 +19,8 @@ const lambdaHandler = async ({
   }
 
   const params: any = new UpdateItemCommand({
-    TableName: Config.TABLE_NAME,
-    Key: { uuid: { S: pathParameters.id } },
+    TableName: Config.RULES_TABLE_NAME,
+    Key: { id: { S: pathParameters.id } },
     UpdateExpression: `set merchantId=:merchantId,partnerId=:partnerId,#mrule=:rulevalue,updatedAt=:updatedAt,event=:event`,
     ExpressionAttributeValues: marshall({
       ":merchantId": body.merchantId,

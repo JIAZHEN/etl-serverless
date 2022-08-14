@@ -1,6 +1,6 @@
 import { Config } from "./util";
 import { getS3Object, uploadS3File, getTransformedS3Key } from "./s3";
-import { MerchantRule } from "../etl-rules/types";
+import { EtlRule } from "../etl-rules/types";
 import { EtlResult, EtlRecord } from "./types";
 import { updateEtlRecord } from "./updateOne";
 import { parse } from "@fast-csv/parse";
@@ -15,10 +15,10 @@ import { SQSEvent } from "aws-lambda";
 const getRulesBy = async (merchantId: string, partnerId: string) => {
   const query = new URLSearchParams({ merchantId, partnerId });
   const response = await fetch(`${Config.RULES_API_URL}/etl-rules?${query}`);
-  return (await response.json()) as MerchantRule[];
+  return (await response.json()) as EtlRule[];
 };
 
-const setupRuleEngine = (rules: MerchantRule[]) => {
+const setupRuleEngine = (rules: EtlRule[]) => {
   const formattedRules = rules.map((rule) => ({
     event: rule.event,
     conditions: { all: [{ ...rule.rule }] },

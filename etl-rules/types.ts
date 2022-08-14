@@ -1,7 +1,7 @@
-export interface MerchantRule {
+export interface EtlRule {
   merchantId: string;
   partnerId: string;
-  uuid: string;
+  id: string;
   rule: {
     fact: string;
     operator: string;

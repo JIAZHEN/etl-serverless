@@ -12,13 +12,13 @@ import { join } from "path";
 const lambdaPath = join(__dirname, "../etl-rules");
 const merchantIdIndexName = "merchantIdIndex";
 
-export class EtlServerlessStack extends Stack {
+export class EtlRulesStack extends Stack {
   public readonly rulesGateway: RestApi;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    const etlTable = this.createEtlRulesTable();
-    const nodeJsFunctionProps = this.createLambdaProps(etlTable);
+    const etlRulesTable = this.createEtlRulesTable();
+    const nodeJsFunctionProps = this.createLambdaProps(etlRulesTable);
 
     const createLambda = new NodejsFunction(this, "createFunction", {
       entry: `${lambdaPath}/create.ts`,
@@ -41,11 +41,11 @@ export class EtlServerlessStack extends Stack {
       ...nodeJsFunctionProps,
     });
 
-    etlTable.grantReadWriteData(createLambda);
-    etlTable.grantReadData(getAllLambda);
-    etlTable.grantReadData(getOneLambda);
-    etlTable.grantReadWriteData(deleteOneLambda);
-    etlTable.grantReadWriteData(updateOneLambda);
+    etlRulesTable.grantReadWriteData(createLambda);
+    etlRulesTable.grantReadData(getAllLambda);
+    etlRulesTable.grantReadData(getOneLambda);
+    etlRulesTable.grantReadWriteData(deleteOneLambda);
+    etlRulesTable.grantReadWriteData(updateOneLambda);
     const createIntegration = new LambdaIntegration(createLambda);
     const getAllIntegration = new LambdaIntegration(getAllLambda);
     const getOneIntegration = new LambdaIntegration(getOneLambda);
@@ -61,14 +61,13 @@ export class EtlServerlessStack extends Stack {
     etlRule.addMethod("GET", getOneIntegration);
     etlRule.addMethod("DELETE", deleteOneIntegration);
     etlRule.addMethod("PUT", updateOneIntegration);
-
     this.rulesGateway = api;
   }
 
   private createLambdaProps = (ddbTable: Table): NodejsFunctionProps => ({
     depsLockFilePath: `${lambdaPath}/package-lock.json`,
     environment: {
-      TABLE_NAME: ddbTable.tableName,
+      RULES_TABLE_NAME: ddbTable.tableName,
       MERCHANTID_INDEX: merchantIdIndexName,
     },
     bundling: { externalModules: ["aws-sdk"] },
@@ -76,10 +75,10 @@ export class EtlServerlessStack extends Stack {
   });
 
   private createEtlRulesTable = () => {
-    const table = new Table(this, `ETL-Service-EtlRules`, {
+    const table = new Table(this, `EtlRules`, {
       tableName: "EtlRules",
       partitionKey: {
-        name: "uuid",
+        name: "id",
         type: AttributeType.STRING,
       },
     });

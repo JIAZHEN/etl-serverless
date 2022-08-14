@@ -12,8 +12,8 @@ const lambdaHandler = async (
   }
 
   const params = new DeleteItemCommand({
-    TableName: Config.TABLE_NAME,
-    Key: { uuid: { S: event.pathParameters.id } },
+    TableName: Config.RULES_TABLE_NAME,
+    Key: { id: { S: event.pathParameters.id } },
   });
   await ddbClient.send(params);
   return {
