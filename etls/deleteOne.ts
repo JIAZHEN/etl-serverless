@@ -1,6 +1,7 @@
 import { DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config, deleteS3Object } from "./util";
+import { ddbClient, Config } from "./util";
+import { deleteS3Object } from "./s3";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { getItemById } from "./getOne";

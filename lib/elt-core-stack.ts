@@ -68,10 +68,12 @@ export class EtlCoreStack extends Stack {
     });
     const processOneLambda = new NodejsFunction(this, "processOneFunction", {
       entry: `${lambdaPath}/processOne.ts`,
+      timeout: Duration.seconds(10),
       ...nodeJsFunctionProps,
     });
     const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
       entry: `${lambdaPath}/processEtl.ts`,
+      timeout: Duration.minutes(10),
       ...nodeJsFunctionProps,
     });
 
