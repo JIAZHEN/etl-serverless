@@ -1,14 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { S3Client } from "@aws-sdk/client-s3";
-import {
-  PutObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-} from "@aws-sdk/client-s3";
-import path from "path";
 
 export const ddbClient = new DynamoDBClient({});
-export const s3Client = new S3Client({});
 
 export const Config = {
   TABLE_NAME: process.env.TABLE_NAME,
@@ -16,38 +8,6 @@ export const Config = {
   RULES_API_URL: process.env.RULES_API_URL,
   REGION: process.env.REGION,
   ETL_TO_PROCESS_QUEUE_URL: process.env.ETL_TO_PROCESS_QUEUE_URL,
-};
-
-export const uploadS3File = async (s3Key: string, bodyContent: Buffer) => {
-  const params = {
-    Bucket: Config.CORE_BUCKET,
-    Key: s3Key,
-    Body: bodyContent,
-  };
-  console.info(`Uploading file ${s3Key}`);
-  await s3Client.send(new PutObjectCommand(params));
-  console.info(`Uploaded file ${s3Key}`);
-};
-
-export const getTransformedS3Key = (s3Key: string) => {
-  const { dir, name, ext } = path.parse(s3Key);
-  return `${dir}/${name}-transformed${ext}`;
-};
-
-export const deleteS3Object = async (s3Key: string) => {
-  const params = {
-    Bucket: Config.CORE_BUCKET,
-    Key: s3Key,
-  };
-  return await s3Client.send(new DeleteObjectCommand(params));
-};
-
-export const getS3Object = async (s3Key: string) => {
-  const params = {
-    Bucket: Config.CORE_BUCKET,
-    Key: s3Key,
-  };
-  return await s3Client.send(new GetObjectCommand(params));
 };
 
 export const etlStatus = {
