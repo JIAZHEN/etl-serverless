@@ -15,7 +15,7 @@ export const updateEtlCore = async (body: any) => {
     ExpressionAttributeValues: marshall({
       ":merchantId": body.merchantId,
       ":partnerId": body.partnerId,
-      ":etlResult": body.etlResult || {},
+      ":etlResult": body.etlResult,
       ":etlStatus": body.etlStatus,
       ":updatedAt": new Date().toUTCString(),
     }),
@@ -40,7 +40,7 @@ const lambdaHandler = async ({
   await updateEtlCore(body);
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: {} }),
+    body: JSON.stringify({ data: body }),
   };
 };
 
