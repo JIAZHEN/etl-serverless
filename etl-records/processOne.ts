@@ -3,7 +3,7 @@ import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { getItemById } from "./getOne";
+import { getEtlRecordById } from "./getOne";
 import { updateEtlRecord } from "./updateOne";
 
 const sqsClient = new SQSClient({});
@@ -17,7 +17,7 @@ const lambdaHandler = async ({
     throw new UnprocessableEntity();
   }
 
-  const etlRecord = await getItemById(pathParameters.id);
+  const etlRecord = await getEtlRecordById(pathParameters.id);
   await updateEtlRecord({ ...etlRecord, etlStatus: "processing" });
   await sqsClient.send(
     new SendMessageCommand({

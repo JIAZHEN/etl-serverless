@@ -5,7 +5,7 @@ import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity, NotFound } from "http-errors";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-export const getItemById = async (id: string) => {
+export const getEtlRecordById = async (id: string) => {
   const params = new GetItemCommand({
     TableName: Config.RECORDS_TABLE_NAME,
     Key: { id: { S: id } },
@@ -24,10 +24,10 @@ const lambdaHandler = async (
     throw new UnprocessableEntity();
   }
 
-  const item = await getItemById(event.pathParameters.id);
+  const etlRecord = await getEtlRecordById(event.pathParameters.id);
   return {
     statusCode: 200,
-    body: JSON.stringify(item),
+    body: JSON.stringify(etlRecord),
   };
 };
 

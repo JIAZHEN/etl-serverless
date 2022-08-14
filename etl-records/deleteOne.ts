@@ -4,7 +4,7 @@ import { ddbClient, Config } from "./util";
 import { deleteS3Object } from "./s3";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
-import { getItemById } from "./getOne";
+import { getEtlRecordById } from "./getOne";
 
 const deleteDDBItem = async (id: string) => {
   const params = new DeleteItemCommand({
@@ -22,7 +22,7 @@ const lambdaHandler = async (
   }
 
   const id = event.pathParameters.id;
-  const item = await getItemById(id);
+  const item = await getEtlRecordById(id);
   await deleteS3Object(item.s3Key); // delete the S3 file
   await deleteDDBItem(id);
 
