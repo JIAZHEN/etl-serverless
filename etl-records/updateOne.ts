@@ -40,7 +40,7 @@ const lambdaHandler = async ({
   await updateEtlRecord(body);
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: body }),
+    body: JSON.stringify({ data: { ...body, id: pathParameters.id } }),
   };
 };
 
