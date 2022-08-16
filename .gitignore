@@ -9,3 +9,4 @@ build
 cdk.out
 template.yaml
 template.yml
+.env
