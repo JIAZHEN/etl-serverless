@@ -1,6 +1,7 @@
 import { ScanCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config } from "./util";
+import { Config } from "./util";
+import { ddbClient } from "./dynamodb";
 import { withDefaultMiddy } from "./middleware";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 

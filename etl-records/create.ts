@@ -1,20 +1,11 @@
-import { PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { marshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayProxyResult } from "aws-lambda";
+import { createEtlRecord } from "./dynamodb";
 import { EtlRecordCreateInput } from "./types";
-import { ddbClient, Config, etlStatus } from "./util";
+import { etlStatus } from "./util";
 import { uploadS3File } from "./s3";
 import { v4 as uuidv4 } from "uuid";
 import { withDefaultMiddy } from "./middleware";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
-
-const create = async (createInput: EtlRecordCreateInput) => {
-  const cmdInput = {
-    TableName: Config.RECORDS_TABLE_NAME,
-    Item: marshall(createInput),
-  };
-  return await ddbClient.send(new PutItemCommand(cmdInput));
-};
 
 const getS3KeyFromInput = (input: EtlRecordCreateInput) => {
   const todayDate = new Date().toISOString().slice(0, 10);
@@ -40,7 +31,7 @@ const lambdaHandler = async ({
     s3Key: s3Key,
     etlResult: {},
   };
-  const data = await create(createInput);
+  const data = await createEtlRecord(createInput);
   return {
     statusCode: 200,
     body: JSON.stringify({ ...data, item: createInput }),

@@ -1,7 +1,3 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-
-export const ddbClient = new DynamoDBClient({});
-
 export const Config = {
   RECORDS_TABLE_NAME: process.env.RECORDS_TABLE_NAME,
   RECORDS_BUCKET_NAME: process.env.RECORDS_BUCKET_NAME,

@@ -1,18 +1,9 @@
-import { DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ddbClient, Config } from "./util";
 import { deleteS3Object } from "./s3";
 import { withDefaultMiddy } from "./middleware";
-import { UnprocessableEntity } from "http-errors";
-import { getEtlRecordById } from "./getOne";
-
-const deleteDDBItem = async (id: string) => {
-  const params = new DeleteItemCommand({
-    TableName: Config.RECORDS_TABLE_NAME,
-    Key: { id: { S: id } },
-  });
-  return await ddbClient.send(params);
-};
+import { UnprocessableEntity, NotFound } from "http-errors";
+import { deleteEtlRecord, getEtlRecordById } from "./dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 const lambdaHandler = async (
   event: APIGatewayEvent
@@ -22,9 +13,14 @@ const lambdaHandler = async (
   }
 
   const id = event.pathParameters.id;
-  const item = await getEtlRecordById(id);
-  await deleteS3Object(item.s3Key); // delete the S3 file
-  await deleteDDBItem(id);
+  const etlRecordItem = await getEtlRecordById(id);
+  if (!etlRecordItem?.Item) {
+    throw new NotFound(`Rule not found with ID ${id}`);
+  }
+  const etlRecord = unmarshall(etlRecordItem.Item);
+
+  await deleteS3Object(etlRecord.s3Key); // delete the S3 file
+  await deleteEtlRecord(id);
 
   return {
     statusCode: 200,

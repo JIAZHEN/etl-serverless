@@ -2,9 +2,9 @@ import { APIGatewayProxyResult } from "aws-lambda";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
-import { UnprocessableEntity } from "http-errors";
-import { getEtlRecordById } from "./getOne";
-import { updateEtlRecord } from "./dynamodb";
+import { UnprocessableEntity, NotFound } from "http-errors";
+import { getEtlRecordById, updateEtlRecord } from "./dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 const sqsClient = new SQSClient({});
 
@@ -17,7 +17,13 @@ const lambdaHandler = async ({
     throw new UnprocessableEntity();
   }
 
-  const etlRecord = await getEtlRecordById(pathParameters.id);
+  const etlRecordItem = await getEtlRecordById(pathParameters.id);
+  if (!etlRecordItem?.Item) {
+    throw new NotFound(`Rule not found with ID ${pathParameters.id}`);
+  }
+
+  const etlRecord = unmarshall(etlRecordItem.Item);
+
   await updateEtlRecord({ ...etlRecord, etlStatus: "processing" });
   await sqsClient.send(
     new SendMessageCommand({
