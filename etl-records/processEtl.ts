@@ -2,7 +2,7 @@ import { Config } from "./util";
 import { getS3Object, uploadS3File, getTransformedS3Key } from "./s3";
 import { EtlRule } from "../etl-rules/types";
 import { EtlResult, EtlRecord } from "./types";
-import { updateEtlRecord } from "./updateOne";
+import { updateEtlRecord } from "./dynamodb";
 import { parse } from "@fast-csv/parse";
 import { format, CsvFormatterStream, Row } from "@fast-csv/format";
 import fetch from "node-fetch";

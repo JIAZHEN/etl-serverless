@@ -4,7 +4,7 @@ import { Config } from "./util";
 import { withDefaultMiddy } from "./middleware";
 import { UnprocessableEntity } from "http-errors";
 import { getEtlRecordById } from "./getOne";
-import { updateEtlRecord } from "./updateOne";
+import { updateEtlRecord } from "./dynamodb";
 
 const sqsClient = new SQSClient({});
 
