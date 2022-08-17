@@ -10,6 +10,7 @@ describe("#rowProcessor", () => {
       const csvFile = fs.createWriteStream("/tmp/random.csv");
       const stream = format({ headers: true });
       stream.pipe(csvFile);
+      const row = { email: "real@example.com", id: "222" };
       const etlRules = [
         {
           ...ids,
@@ -32,7 +33,7 @@ describe("#rowProcessor", () => {
       ];
       const etlResult = { total: 0, valid: 0, invalid: 0, details: {} };
       const engine = setupRuleEngine(etlRules);
-      await rowProcessor({}, engine, etlResult, stream);
+      await rowProcessor(row, engine, etlResult, stream);
       fs.unlinkSync(csvFile.path);
       expect(etlRules).toEqual(2);
     });
