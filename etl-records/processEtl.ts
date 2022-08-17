@@ -18,7 +18,7 @@ const getRulesBy = async (merchantId: string, partnerId: string) => {
   return (await response.json()) as EtlRule[];
 };
 
-const setupRuleEngine = (rules: EtlRule[]) => {
+export const setupRuleEngine = (rules: EtlRule[]) => {
   const formattedRules = rules.map((rule) => ({
     event: rule.event,
     conditions: { all: [{ ...rule.rule }] },
@@ -26,7 +26,7 @@ const setupRuleEngine = (rules: EtlRule[]) => {
   return new Engine(formattedRules);
 };
 
-const rowProcessor = async (
+export const rowProcessor = async (
   row: any,
   engine: Engine,
   etlResult: EtlResult,
