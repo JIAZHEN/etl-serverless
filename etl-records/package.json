@@ -8,6 +8,7 @@
     "@types/aws-lambda": "^8.10.101",
     "@types/http-errors": "^1.8.2",
     "@types/node": "*",
+    "@types/node-fetch": "^2.6.2",
     "@types/uuid": "*"
   },
   "dependencies": {
@@ -23,7 +24,7 @@
     "fast-csv": "^4.3.6",
     "http-errors": "^2.0.0",
     "json-rules-engine": "^6.1.2",
-    "node-fetch": "^3.2.10",
+    "node-fetch": "^2.6.7",
     "uuid": "*"
   }
 }
