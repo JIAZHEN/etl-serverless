@@ -34,12 +34,53 @@ describe("#rowProcessor", () => {
       const etlResult = { total: 0, valid: 0, invalid: 0, errors: {} };
       const engine = setupRuleEngine(etlRules, etlResult);
       await rowProcessor(row, engine, etlResult, stream);
-      fs.unlinkSync(csvFile.path);
+
       expect(etlResult).toEqual({
         errors: { "id-equal-to": 1 },
         invalid: 1,
         total: 0,
         valid: 0,
+      });
+    });
+
+    it("returns valid when all conditions meet", async () => {
+      const csvFile = fs.createWriteStream(tempFileName);
+      const stream = format({ headers: true });
+      stream.pipe(csvFile);
+      const row = { email: "real@example.com", id: "222", price: 200 };
+      const etlRules = [
+        {
+          ...ids,
+          id: "1",
+          rule: { fact: "email", operator: "equal", value: "real@example.com" },
+          event: {
+            type: "email-equal-to",
+            params: { consequence: "row-valid" },
+          },
+        },
+        {
+          ...ids,
+          id: "2",
+          rule: {
+            fact: "price",
+            operator: "lessThanInclusive",
+            value: 100,
+          },
+          event: {
+            type: "price",
+            params: { consequence: "row-invalid" },
+          },
+        },
+      ];
+      const etlResult = { total: 0, valid: 0, invalid: 0, errors: {} };
+      const engine = setupRuleEngine(etlRules, etlResult);
+      await rowProcessor(row, engine, etlResult, stream);
+
+      expect(etlResult).toEqual({
+        errors: {},
+        invalid: 0,
+        total: 0,
+        valid: 1,
       });
     });
   });

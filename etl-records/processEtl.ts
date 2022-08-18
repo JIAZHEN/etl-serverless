@@ -40,13 +40,12 @@ export const rowProcessor = async (
   writeStream: CsvFormatterStream<Row, Row>
 ) => {
   const { results, failureResults } = await engine.run(row);
-  let rowResult;
+  let rowResult = true;
 
   [...results, ...failureResults].forEach((result) => {
     if (!result.event) {
       throw new Error("error!");
     }
-
     const event: Event = result.event;
 
     if (isInvalidEvent(event, result)) {
