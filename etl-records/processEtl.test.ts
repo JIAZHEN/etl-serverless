@@ -26,16 +26,21 @@ describe("#rowProcessor", () => {
           id: "2",
           rule: { fact: "id", operator: "equal", value: "123" },
           event: {
-            type: "email-equal-to",
+            type: "id-equal-to",
             params: { consequence: "row-valid" },
           },
         },
       ];
-      const etlResult = { total: 0, valid: 0, invalid: 0, details: {} };
-      const engine = setupRuleEngine(etlRules);
+      const etlResult = { total: 0, valid: 0, invalid: 0, errors: {} };
+      const engine = setupRuleEngine(etlRules, etlResult);
       await rowProcessor(row, engine, etlResult, stream);
       fs.unlinkSync(csvFile.path);
-      expect(etlRules).toEqual(2);
+      expect(etlResult).toEqual({
+        errors: { "id-equal-to": 1 },
+        invalid: 1,
+        total: 0,
+        valid: 0,
+      });
     });
   });
 });

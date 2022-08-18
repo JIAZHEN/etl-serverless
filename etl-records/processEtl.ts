@@ -6,7 +6,7 @@ import { updateEtlRecord } from "./dynamodb";
 import { parse } from "@fast-csv/parse";
 import { format, CsvFormatterStream, Row } from "@fast-csv/format";
 import fetch from "node-fetch";
-import { Engine } from "json-rules-engine";
+import { Engine, RuleResult, Event } from "json-rules-engine";
 import { Stream } from "stream";
 import { URLSearchParams } from "url";
 import fs from "fs";
@@ -18,12 +18,26 @@ const getRulesBy = async (merchantId: string, partnerId: string) => {
   return (await response.json()) as EtlRule[];
 };
 
-export const setupRuleEngine = (rules: EtlRule[]) => {
+const isInvalidEvent = (event: Event, result: RuleResult) =>
+  (event?.params?.consequence === "row-invalid" && result.result) ||
+  (event?.params?.consequence === "row-valid" && !result.result);
+
+export const setupRuleEngine = (rules: EtlRule[], etlResult: EtlResult) => {
   const formattedRules = rules.map((rule) => ({
     event: rule.event,
     conditions: { all: [{ ...rule.rule }] },
   }));
-  return new Engine(formattedRules);
+  const engine = new Engine(formattedRules);
+  engine
+    .on("success", async (event, almanac, result) => {
+      if (isInvalidEvent(event, result))
+        almanac.addRuntimeFact("row_result", false);
+    })
+    .on("failure", async (event, almanac, result) => {
+      if (isInvalidEvent(event, result))
+        almanac.addRuntimeFact("row_result", false);
+    });
+  return engine;
 };
 
 export const rowProcessor = async (
@@ -32,22 +46,24 @@ export const rowProcessor = async (
   etlResult: EtlResult,
   writeStream: CsvFormatterStream<Row, Row>
 ) => {
-  const { events } = await engine.run(row);
-  let validRow = true;
-  events.forEach((event) => {
-    if (validRow && event?.params?.consequence === "row-invalid")
-      validRow = false;
+  const { almanac, results, failureResults } = await engine.run(row);
+  const rowResult = await almanac.factValue("row_result");
 
-    const details: { [key: string]: any } = etlResult.details;
-    details[event.type] ||= 0;
-    details[event.type] += 1;
+  [...results, ...failureResults].forEach((result) => {
+    if (!result.event) {
+      throw new Error("error!");
+    }
+
+    const event: Event = result.event;
+
+    if (isInvalidEvent(event, result)) {
+      const errors: { [key: string]: any } = etlResult.errors;
+      errors[event?.type || ""] ||= 0;
+      errors[event?.type || ""] += 1;
+    }
   });
 
-  if (validRow && events.length === 0) {
-    validRow = false;
-  }
-
-  if (validRow) {
+  if (rowResult) {
     etlResult.valid += 1;
     writeStream.write(row);
   } else {
@@ -56,20 +72,19 @@ export const rowProcessor = async (
 };
 
 const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
+  const etlResult: EtlResult = {
+    total: 0,
+    valid: 0,
+    invalid: 0,
+    errors: {},
+  };
   const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
-  const engine = setupRuleEngine(rules);
+  const engine = setupRuleEngine(rules, etlResult);
   const csvFile = fs.createWriteStream("/tmp/random.csv");
   const stream = format({ headers: true });
   stream.pipe(csvFile);
 
   const streamOutput: EtlResult = await new Promise((resolve, _) => {
-    const etlResult: EtlResult = {
-      total: 0,
-      valid: 0,
-      invalid: 0,
-      details: {},
-    };
-
     body
       .pipe(parse({ headers: true }))
       .on(
@@ -82,8 +97,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
       });
   });
 
-  const etlResult = await Promise.resolve(streamOutput);
-
+  await Promise.resolve(streamOutput);
   await uploadS3File(
     getTransformedS3Key(etlRecord.s3Key),
     fs.readFileSync("/tmp/random.csv")

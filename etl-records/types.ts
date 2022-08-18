@@ -10,7 +10,7 @@ export interface EtlResult {
   total: number;
   valid: number;
   invalid: number;
-  details: {
+  errors: {
     [key: string]: any;
   };
 }
