@@ -18,6 +18,8 @@ const getRulesBy = async (merchantId: string, partnerId: string) => {
   return (await response.json()) as EtlRule[];
 };
 
+export const tempFileName = "/tmp/random.csv";
+
 const isInvalidEvent = (event: Event, result: RuleResult) =>
   (event?.params?.consequence === "row-invalid" && result.result) ||
   (event?.params?.consequence === "row-valid" && !result.result);
@@ -28,15 +30,6 @@ export const setupRuleEngine = (rules: EtlRule[], etlResult: EtlResult) => {
     conditions: { all: [{ ...rule.rule }] },
   }));
   const engine = new Engine(formattedRules);
-  engine
-    .on("success", async (event, almanac, result) => {
-      if (isInvalidEvent(event, result))
-        almanac.addRuntimeFact("row_result", false);
-    })
-    .on("failure", async (event, almanac, result) => {
-      if (isInvalidEvent(event, result))
-        almanac.addRuntimeFact("row_result", false);
-    });
   return engine;
 };
 
@@ -46,8 +39,8 @@ export const rowProcessor = async (
   etlResult: EtlResult,
   writeStream: CsvFormatterStream<Row, Row>
 ) => {
-  const { almanac, results, failureResults } = await engine.run(row);
-  const rowResult = await almanac.factValue("row_result");
+  const { results, failureResults } = await engine.run(row);
+  let rowResult;
 
   [...results, ...failureResults].forEach((result) => {
     if (!result.event) {
@@ -57,6 +50,7 @@ export const rowProcessor = async (
     const event: Event = result.event;
 
     if (isInvalidEvent(event, result)) {
+      rowResult = false;
       const errors: { [key: string]: any } = etlResult.errors;
       errors[event?.type || ""] ||= 0;
       errors[event?.type || ""] += 1;
@@ -80,7 +74,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
   };
   const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
   const engine = setupRuleEngine(rules, etlResult);
-  const csvFile = fs.createWriteStream("/tmp/random.csv");
+  const csvFile = fs.createWriteStream(tempFileName);
   const stream = format({ headers: true });
   stream.pipe(csvFile);
 
@@ -100,7 +94,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
   await Promise.resolve(streamOutput);
   await uploadS3File(
     getTransformedS3Key(etlRecord.s3Key),
-    fs.readFileSync("/tmp/random.csv")
+    fs.readFileSync(tempFileName)
   );
   return etlResult;
 };

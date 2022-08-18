@@ -1,5 +1,5 @@
-import { rowProcessor, setupRuleEngine } from "./processEtl";
-import { format, CsvFormatterStream, Row } from "@fast-csv/format";
+import { rowProcessor, setupRuleEngine, tempFileName } from "./processEtl";
+import { format } from "@fast-csv/format";
 import * as fs from "fs";
 
 describe("#rowProcessor", () => {
@@ -7,7 +7,7 @@ describe("#rowProcessor", () => {
 
   describe("when rules are defined", () => {
     it("returns invalid when not all conditions not meet", async () => {
-      const csvFile = fs.createWriteStream("/tmp/random.csv");
+      const csvFile = fs.createWriteStream(tempFileName);
       const stream = format({ headers: true });
       stream.pipe(csvFile);
       const row = { email: "real@example.com", id: "222" };
