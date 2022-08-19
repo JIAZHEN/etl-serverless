@@ -17,6 +17,7 @@ import {
   FunctionField,
   RaRecord,
 } from "react-admin";
+import { AutoNameField } from "../components/AutoNameField";
 
 type RuleInput = {
   partner: string;
@@ -37,7 +38,7 @@ const OPERATORS = [
   { id: "greaterThan", name: "Greater than" },
   { id: "greaterThanInclusive", name: "Greater than inclusive" },
 ];
-const CONSEQUENCES = [
+const RULE_TYPES = [
   { id: "row-valid", name: "Row valid" },
   { id: "row-invalid", name: "Row invalid" },
 ];
@@ -67,24 +68,19 @@ export const RuleList = () => (
 export const RuleEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="id" />
+      <TextInput disabled={true} source="id" label="ID" fullWidth />
       <TextInput source="merchantId" validate={[required()]} fullWidth />
       <TextInput source="partnerId" validate={[required()]} fullWidth />
-      <TextInput
-        source="event.type"
-        label="Rule name"
-        helperText="Rule name one word with hyphen. custom-rule-one"
-        validate={[required()]}
-      />
       <RadioButtonGroupInput
-        label="Rule consequence"
-        source="event.params.consequence"
-        choices={CONSEQUENCES}
+        label="Rule type"
+        source="event.type"
+        choices={RULE_TYPES}
         validate={[required()]}
       />
       <TextInput source="rule.fact" validate={[required()]} />
       <SelectInput source="rule.operator" choices={OPERATORS} />
       <TextInput source="rule.value" validate={[required()]} />
+      <AutoNameField />
     </SimpleForm>
   </Edit>
 );
@@ -94,21 +90,16 @@ export const RuleCreate = (props: RuleInput) => (
     <SimpleForm>
       <TextInput source="merchantId" validate={[required()]} fullWidth />
       <TextInput source="partnerId" validate={[required()]} fullWidth />
-      <TextInput
-        source="event.type"
-        label="Rule name"
-        helperText="Rule name one word with hyphen. custom-rule-one"
-        validate={[required()]}
-      />
       <RadioButtonGroupInput
-        label="Rule consequence"
-        source="event.params.consequence"
-        choices={CONSEQUENCES}
+        label="Rule type"
+        source="event.type"
+        choices={RULE_TYPES}
         validate={[required()]}
       />
       <TextInput source="rule.fact" validate={[required()]} />
       <SelectInput source="rule.operator" choices={OPERATORS} />
       <TextInput source="rule.value" validate={[required()]} />
+      <AutoNameField />
     </SimpleForm>
   </Create>
 );

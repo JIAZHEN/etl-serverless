@@ -38,7 +38,7 @@ const lambdaHandler = async ({
   await ddbClient.send(params);
   return {
     statusCode: 200,
-    body: JSON.stringify({ data: { ...body, id: pathParameters.id } }),
+    body: JSON.stringify({ ...body, id: pathParameters.id }),
   };
 };
 

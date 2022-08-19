@@ -54,7 +54,7 @@ export const RecordList = () => (
 export const RecordEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="id" />
+      <TextField source="id" />
       <TextInput source="merchantId" validate={[required()]} />
       <TextInput source="partnerId" validate={[required()]} />
       <SelectInput source="etlStatus" choices={ETL_STATUS} />
