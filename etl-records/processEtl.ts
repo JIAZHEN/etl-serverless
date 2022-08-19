@@ -21,16 +21,15 @@ const getRulesBy = async (merchantId: string, partnerId: string) => {
 export const tempFileName = "/tmp/random.csv";
 
 const isInvalidEvent = (event: Event, result: RuleResult) =>
-  (event?.params?.consequence === "row-invalid" && result.result) ||
-  (event?.params?.consequence === "row-valid" && !result.result);
+  (event.type === "row-invalid" && result.result) ||
+  (event.type === "row-valid" && !result.result);
 
-export const setupRuleEngine = (rules: EtlRule[], etlResult: EtlResult) => {
+export const setupRuleEngine = (rules: EtlRule[]) => {
   const formattedRules = rules.map((rule) => ({
     event: rule.event,
     conditions: { all: [{ ...rule.rule }] },
   }));
-  const engine = new Engine(formattedRules);
-  return engine;
+  return new Engine(formattedRules);
 };
 
 export const rowProcessor = async (
@@ -51,8 +50,8 @@ export const rowProcessor = async (
     if (isInvalidEvent(event, result)) {
       rowResult = false;
       const errors: { [key: string]: any } = etlResult.errors;
-      errors[event?.type || ""] ||= 0;
-      errors[event?.type || ""] += 1;
+      errors[event?.params?.name || ""] ||= 0;
+      errors[event?.params?.name || ""] += 1;
     }
   });
 
@@ -72,7 +71,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
     errors: {},
   };
   const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
-  const engine = setupRuleEngine(rules, etlResult);
+  const engine = setupRuleEngine(rules);
   const csvFile = fs.createWriteStream(tempFileName);
   const stream = format({ headers: true });
   stream.pipe(csvFile);

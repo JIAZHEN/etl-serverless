@@ -17,8 +17,8 @@ describe("#rowProcessor", () => {
           id: "1",
           rule: { fact: "email", operator: "equal", value: "real@example.com" },
           event: {
-            type: "email-equal-to",
-            params: { consequence: "row-valid" },
+            type: "row-valid",
+            params: { name: "email-equal-real@example.com" },
           },
         },
         {
@@ -26,17 +26,17 @@ describe("#rowProcessor", () => {
           id: "2",
           rule: { fact: "id", operator: "equal", value: "123" },
           event: {
-            type: "id-equal-to",
-            params: { consequence: "row-valid" },
+            type: "row-valid",
+            params: { name: "id-equal-123" },
           },
         },
       ];
       const etlResult = { total: 0, valid: 0, invalid: 0, errors: {} };
-      const engine = setupRuleEngine(etlRules, etlResult);
+      const engine = setupRuleEngine(etlRules);
       await rowProcessor(row, engine, etlResult, stream);
 
       expect(etlResult).toEqual({
-        errors: { "id-equal-to": 1 },
+        errors: { "id-equal-123": 1 },
         invalid: 1,
         total: 0,
         valid: 0,
@@ -54,8 +54,8 @@ describe("#rowProcessor", () => {
           id: "1",
           rule: { fact: "email", operator: "equal", value: "real@example.com" },
           event: {
-            type: "email-equal-to",
-            params: { consequence: "row-valid" },
+            type: "row-valid",
+            params: { name: "email-equal-real@example.com" },
           },
         },
         {
@@ -67,13 +67,13 @@ describe("#rowProcessor", () => {
             value: 100,
           },
           event: {
-            type: "price",
-            params: { consequence: "row-invalid" },
+            type: "row-invalid",
+            params: { name: "price-lessThanInclusive-100" },
           },
         },
       ];
       const etlResult = { total: 0, valid: 0, invalid: 0, errors: {} };
-      const engine = setupRuleEngine(etlRules, etlResult);
+      const engine = setupRuleEngine(etlRules);
       await rowProcessor(row, engine, etlResult, stream);
 
       expect(etlResult).toEqual({
