@@ -19,6 +19,7 @@ import {
   Labeled,
 } from "react-admin";
 import { EtlButton } from "../components/EtlButton";
+import { StatusColumn } from "../components/StatusColumn";
 
 type EtlRecordInput = {
   partnerId: string;
@@ -40,7 +41,7 @@ export const RecordList = () => (
       <TextField source="merchantId" />
       <ChipField source="partnerId" />
       <UrlField source="s3Key" />
-      <ChipField source="etlStatus" color="primary" />
+      <StatusColumn />
       <TextField source="etlResult" />
       <DateField source="createdAt" showTime={true} locales={"en-GB"} />
       <DateField source="updatedAt" showTime={true} locales={"en-GB"} />

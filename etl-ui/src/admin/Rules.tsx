@@ -49,8 +49,8 @@ export const RuleList = () => (
       <TextField source="id" />
       <TextField source="merchantId" />
       <ChipField source="partnerId" />
-      <TextField label="Rule name" source="event.type" />
-      <TextField label="Rule consequence" source="event.params.consequence" />
+      <TextField label="Rule type" source="event.type" />
+      <TextField label="Rule name" source="event.params.name" />
       <FunctionField
         label="Rule"
         render={(record: RaRecord) =>
