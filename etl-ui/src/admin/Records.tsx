@@ -23,6 +23,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CircularProgress from "@mui/material/CircularProgress";
 import CalculateIcon from "@mui/icons-material/Calculate";
+import CloudDoneIcon from "@mui/icons-material/CloudDone";
+import ErrorIcon from "@mui/icons-material/Error";
+import PendingIcon from "@mui/icons-material/Pending";
 import { EtlButton } from "../components/EtlButton";
 import { DateTimeListItem } from "../components/DateTimeListItem";
 
@@ -50,13 +53,18 @@ export const RecordList = () => (
       <UrlField source="s3Key" />
       <FunctionField
         label="Status"
-        render={(record: any) =>
-          record.etlStatus === "success" ? (
-            <CircularProgress />
-          ) : (
-            record.etlStatus
-          )
-        }
+        render={(record: any) => {
+          switch (record.etlStatus) {
+            case "success":
+              return <CloudDoneIcon color="success" />;
+            case "failed":
+              return <ErrorIcon color="error" />;
+            case "processing":
+              return <CircularProgress />;
+            default:
+              return <PendingIcon />;
+          }
+        }}
       />
       <FunctionField
         sx={{ display: "flex" }}
