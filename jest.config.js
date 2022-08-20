@@ -1,6 +1,6 @@
 module.exports = {
   testEnvironment: "node",
-  roots: ["<rootDir>/test", "<rootDir>/etl-records"],
+  roots: ["<rootDir>/test", "<rootDir>/etl-records", "<rootDir>/etl-core"],
   testMatch: ["**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": "ts-jest",

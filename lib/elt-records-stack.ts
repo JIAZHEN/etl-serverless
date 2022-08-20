@@ -19,6 +19,10 @@ interface EtlRecordsStackProps extends StackProps {
 }
 
 export class EtlRecordsStack extends Stack {
+  public readonly recordsBucket: Bucket;
+  public readonly recordsTable: Table;
+  public readonly etlToProcessQueue: sqs.Queue;
+
   constructor(scope: Construct, id: string, props?: EtlRecordsStackProps) {
     super(scope, id, props);
     const recordsBucket = new Bucket(this, "etl-records", {
@@ -104,6 +108,10 @@ export class EtlRecordsStack extends Stack {
       })
     );
     etlToProcessQueue.grantSendMessages(processOneLambda);
+
+    this.recordsBucket = recordsBucket;
+    this.recordsTable = recordsTable;
+    this.etlToProcessQueue = etlToProcessQueue;
   }
 
   private createEtlRecordsTable = () => {
