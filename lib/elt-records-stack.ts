@@ -10,7 +10,6 @@ import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 import * as sqs from "aws-cdk-lib/aws-sqs";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 const lambdaPath = join(__dirname, "../etl-records");
 
@@ -74,10 +73,6 @@ export class EtlRecordsStack extends Stack {
       entry: `${lambdaPath}/processOne.ts`,
       ...nodeJsFunctionProps,
     });
-    const processEtlLambda = new NodejsFunction(this, "processEtlFunction", {
-      entry: `${lambdaPath}/processEtl.ts`,
-      ...nodeJsFunctionProps,
-    });
 
     recordsTable.grantReadWriteData(createLambda);
     recordsTable.grantReadData(getAllLambda);
@@ -85,10 +80,8 @@ export class EtlRecordsStack extends Stack {
     recordsTable.grantReadWriteData(deleteOneLambda);
     recordsTable.grantReadWriteData(updateOneLambda);
     recordsTable.grantReadWriteData(processOneLambda);
-    recordsTable.grantReadWriteData(processEtlLambda);
     recordsBucket.grantReadWrite(createLambda);
     recordsBucket.grantReadWrite(deleteOneLambda);
-    recordsBucket.grantReadWrite(processEtlLambda);
 
     // API Gateway + Lambda
     const api = this.createApi();
@@ -101,12 +94,6 @@ export class EtlRecordsStack extends Stack {
     etl.addMethod("PUT", new LambdaIntegration(updateOneLambda));
     const etlProcess = etl.addResource("process");
     etlProcess.addMethod("POST", new LambdaIntegration(processOneLambda));
-    // SQS lambda
-    processEtlLambda.addEventSource(
-      new SqsEventSource(etlToProcessQueue, {
-        batchSize: 10,
-      })
-    );
     etlToProcessQueue.grantSendMessages(processOneLambda);
 
     this.recordsBucket = recordsBucket;

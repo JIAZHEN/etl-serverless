@@ -1,0 +1,30 @@
+{
+  "name": "etl-core-lambda",
+  "version": "1.0.0",
+  "description": "Lambdas to do CRUD operations on DynamoDB",
+  "private": true,
+  "license": "MIT",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.101",
+    "@types/http-errors": "^1.8.2",
+    "@types/node": "*",
+    "@types/node-fetch": "^2.6.2",
+    "@types/uuid": "*"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.142.0",
+    "@aws-sdk/client-s3": "^3.142.0",
+    "@aws-sdk/client-sqs": "^3.145.0",
+    "@aws-sdk/util-dynamodb": "^3.142.0",
+    "@middy/core": "^3.1.1",
+    "@middy/http-cors": "^3.1.1",
+    "@middy/http-error-handler": "^3.1.1",
+    "@middy/http-json-body-parser": "^3.1.1",
+    "aws-sdk": "*",
+    "fast-csv": "^4.3.6",
+    "http-errors": "^2.0.0",
+    "json-rules-engine": "^6.1.2",
+    "node-fetch": "^2.6.7",
+    "uuid": "*"
+  }
+}
