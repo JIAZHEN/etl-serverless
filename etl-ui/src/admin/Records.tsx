@@ -9,7 +9,6 @@ import {
   TextInput,
   Create,
   SelectInput,
-  DateField,
   ChipField,
   required,
   DeleteButton,
@@ -17,9 +16,15 @@ import {
   FileField,
   UrlField,
   Labeled,
+  FunctionField,
+  WrapperField,
 } from "react-admin";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CircularProgress from "@mui/material/CircularProgress";
+import CalculateIcon from "@mui/icons-material/Calculate";
 import { EtlButton } from "../components/EtlButton";
-import { StatusColumn } from "../components/StatusColumn";
+import { DateTimeListItem } from "../components/DateTimeListItem";
 
 type EtlRecordInput = {
   partnerId: string;
@@ -38,13 +43,37 @@ export const RecordList = () => (
   <List>
     <Datagrid>
       <TextField source="id" />
-      <TextField source="merchantId" />
-      <ChipField source="partnerId" />
+      <WrapperField label="Primary key" textAlign="center">
+        <TextField source="merchantId" />
+        <ChipField source="partnerId" />
+      </WrapperField>
       <UrlField source="s3Key" />
-      <StatusColumn />
-      <TextField source="etlResult" />
-      <DateField source="createdAt" showTime={true} locales={"en-GB"} />
-      <DateField source="updatedAt" showTime={true} locales={"en-GB"} />
+      <FunctionField
+        label="Status"
+        render={(record: any) =>
+          record.etlStatus === "success" ? (
+            <CircularProgress />
+          ) : (
+            record.etlStatus
+          )
+        }
+      />
+      <FunctionField
+        sx={{ display: "flex" }}
+        label="Etl result"
+        render={(record: any) => (
+          <WrapperField>
+            <CalculateIcon color="info" fontSize="small" />{" "}
+            {record.etlResult.total}
+            <CheckCircleIcon color="success" fontSize="small" />{" "}
+            {record.etlResult.valid}
+            <CancelIcon color="error" fontSize="small" />{" "}
+            {record.etlResult.invalid}
+          </WrapperField>
+        )}
+      />
+      <DateTimeListItem source="createdAt" />
+      <DateTimeListItem source="updatedAt" />
       <EtlButton />
       <EditButton />
       <DeleteButton />

@@ -9,15 +9,16 @@ import {
   TextInput,
   Create,
   SelectInput,
-  DateField,
   ChipField,
   required,
   DeleteButton,
   RadioButtonGroupInput,
   FunctionField,
   RaRecord,
+  WrapperField,
 } from "react-admin";
 import { AutoNameField } from "../components/AutoNameField";
+import { DateTimeListItem } from "../components/DateTimeListItem";
 
 type RuleInput = {
   partner: string;
@@ -47,8 +48,10 @@ export const RuleList = () => (
   <List>
     <Datagrid rowClick="edit">
       <TextField source="id" />
-      <TextField source="merchantId" />
-      <ChipField source="partnerId" />
+      <WrapperField label="Primary key" textAlign="center">
+        <TextField source="merchantId" />
+        <ChipField source="partnerId" />
+      </WrapperField>
       <TextField label="Rule type" source="event.type" />
       <TextField label="Rule name" source="event.params.name" />
       <FunctionField
@@ -57,8 +60,8 @@ export const RuleList = () => (
           `${record.rule.fact} ${record.rule.operator} ${record.rule.value}`
         }
       />
-      <DateField source="createdAt" showTime={true} locales={"en-GB"} />
-      <DateField source="updatedAt" showTime={true} locales={"en-GB"} />
+      <DateTimeListItem source="createdAt" />
+      <DateTimeListItem source="updatedAt" />
       <EditButton />
       <DeleteButton />
     </Datagrid>
