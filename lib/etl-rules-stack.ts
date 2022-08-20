@@ -8,6 +8,7 @@ import {
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
+import { corsHosts } from "../globalConfig";
 
 const lambdaPath = join(__dirname, "../etl-rules");
 const merchantIdIndexName = "merchantIdIndex";
@@ -105,7 +106,7 @@ export class EtlRulesStack extends Stack {
         ],
         allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
         allowCredentials: true,
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: corsHosts,
       },
     });
 }

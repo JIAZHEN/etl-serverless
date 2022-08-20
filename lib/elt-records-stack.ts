@@ -10,6 +10,7 @@ import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import { corsHosts } from "../globalConfig";
 
 const lambdaPath = join(__dirname, "../etl-records");
 
@@ -125,7 +126,7 @@ export class EtlRecordsStack extends Stack {
         ],
         allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
         allowCredentials: true,
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: corsHosts,
       },
       binaryMediaTypes: ["text/csv"],
     });
