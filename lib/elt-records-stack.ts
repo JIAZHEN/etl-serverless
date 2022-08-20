@@ -58,7 +58,7 @@ export class EtlRecordsStack extends Stack {
       this,
       "createS3PresignedUrlFunction",
       {
-        entry: `${lambdaPath}/createS3SignedUrl.ts`,
+        entry: `${lambdaPath}/createS3PresignedUrl.ts`,
         ...nodeJsFunctionProps,
       }
     );
