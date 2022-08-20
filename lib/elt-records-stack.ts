@@ -54,6 +54,14 @@ export class EtlRecordsStack extends Stack {
       entry: `${lambdaPath}/create.ts`,
       ...nodeJsFunctionProps,
     });
+    const createS3PresignedUrlLambda = new NodejsFunction(
+      this,
+      "createS3PresignedUrlFunction",
+      {
+        entry: `${lambdaPath}/createS3SignedUrl.ts`,
+        ...nodeJsFunctionProps,
+      }
+    );
     const getAllLambda = new NodejsFunction(this, "getAllFunction", {
       entry: `${lambdaPath}/getAll.ts`,
       ...nodeJsFunctionProps,
@@ -83,12 +91,19 @@ export class EtlRecordsStack extends Stack {
     recordsTable.grantReadWriteData(processOneLambda);
     recordsBucket.grantReadWrite(createLambda);
     recordsBucket.grantReadWrite(deleteOneLambda);
+    recordsBucket.grantReadWrite(createS3PresignedUrlLambda);
 
     // API Gateway + Lambda
     const api = this.createApi();
     const etls = api.root.addResource("etl-records");
     etls.addMethod("POST", new LambdaIntegration(createLambda));
     etls.addMethod("GET", new LambdaIntegration(getAllLambda));
+    const presignedUrlEndpoint = etls.addResource("createS3PresignedUrl");
+    presignedUrlEndpoint.addMethod(
+      "POST",
+      new LambdaIntegration(createS3PresignedUrlLambda)
+    );
+
     const etl = etls.addResource("{id}");
     etl.addMethod("GET", new LambdaIntegration(getOneLambda));
     etl.addMethod("DELETE", new LambdaIntegration(deleteOneLambda));
