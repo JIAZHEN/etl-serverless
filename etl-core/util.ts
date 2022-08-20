@@ -5,10 +5,3 @@ export const Config = {
   REGION: process.env.REGION,
   ETL_TO_PROCESS_QUEUE_URL: process.env.ETL_TO_PROCESS_QUEUE_URL,
 };
-
-export const etlStatus = {
-  pending: "pending",
-  processing: "processing",
-  failed: "failed",
-  success: "success",
-};

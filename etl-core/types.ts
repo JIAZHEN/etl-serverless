@@ -1,11 +1,3 @@
-export interface EtlRecordCreateInput {
-  merchantId: string;
-  partnerId: string;
-  s3Key: string;
-  [key: string]: any;
-  etlStatus: string;
-}
-
 export interface EtlResult {
   total: number;
   valid: number;
@@ -23,11 +15,4 @@ export interface EtlRecord {
   etlStatus: string;
   etlResult: EtlResult;
   [key: string]: any;
-}
-
-export interface RuleEvent {
-  type: string;
-  params: {
-    [key: string]: any;
-  };
 }
