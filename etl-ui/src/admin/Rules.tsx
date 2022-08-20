@@ -13,8 +13,6 @@ import {
   required,
   DeleteButton,
   RadioButtonGroupInput,
-  FunctionField,
-  RaRecord,
   WrapperField,
 } from "react-admin";
 import { AutoNameField } from "../components/AutoNameField";
@@ -52,14 +50,11 @@ export const RuleList = () => (
         <TextField source="merchantId" />
         <ChipField source="partnerId" />
       </WrapperField>
-      <TextField label="Rule type" source="event.type" />
       <TextField label="Rule name" source="event.params.name" />
-      <FunctionField
-        label="Rule"
-        render={(record: RaRecord) =>
-          `${record.rule.fact} ${record.rule.operator} ${record.rule.value}`
-        }
-      />
+      <TextField label="Rule type" source="event.type" />
+      <TextField label="Rule field" source="rule.fact" />
+      <TextField label="Rule operator" source="rule.operator" />
+      <TextField label="Rule value" source="rule.value" />
       <DateTimeListItem source="createdAt" />
       <DateTimeListItem source="updatedAt" />
       <EditButton />
