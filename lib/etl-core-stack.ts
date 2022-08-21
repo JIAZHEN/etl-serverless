@@ -1,4 +1,4 @@
-import { Stack, StackProps } from "aws-cdk-lib";
+import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import {
@@ -56,5 +56,6 @@ export class EtlCoreStack extends Stack {
     environment: environment,
     bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
+    timeout: Duration.minutes(10),
   });
 }
