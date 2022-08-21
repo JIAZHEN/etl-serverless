@@ -12,23 +12,23 @@ const lambdaHandler = async ({
 }: {
   queryStringParameters: APIGatewayProxyEventQueryStringParameters;
 }): Promise<APIGatewayProxyResult> => {
-  let params = null;
-  if (queryStringParameters?.merchantId && queryStringParameters?.partnerId) {
-    params = new QueryCommand({
+  let cmd = null;
+  if (queryStringParameters?.merchantId || queryStringParameters?.partnerId) {
+    cmd = new QueryCommand({
       TableName: Config.RULES_TABLE_NAME,
       IndexName: Config.MERCHANTID_INDEX,
       KeyConditionExpression: "merchantId=:merchantId",
-      FilterExpression: " partnerId=:partnerId",
+      FilterExpression: "partnerId=:partnerId",
       ExpressionAttributeValues: {
-        ":merchantId": { S: queryStringParameters.merchantId },
-        ":partnerId": { S: queryStringParameters.partnerId },
+        ":merchantId": { S: queryStringParameters.merchantId || "" },
+        ":partnerId": { S: queryStringParameters.partnerId || "" },
       },
     });
   } else {
-    params = new ScanCommand({ TableName: Config.RULES_TABLE_NAME });
+    cmd = new ScanCommand({ TableName: Config.RULES_TABLE_NAME });
   }
 
-  const data = await ddbClient.send(params);
+  const data = await ddbClient.send(cmd);
   const formattedItems = data?.Items?.map((item) => unmarshall(item));
   return {
     statusCode: 200,
