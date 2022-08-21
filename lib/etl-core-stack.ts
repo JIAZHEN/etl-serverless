@@ -56,6 +56,6 @@ export class EtlCoreStack extends Stack {
     environment: environment,
     bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
-    timeout: Duration.minutes(10),
+    timeout: Duration.minutes(15),
   });
 }
