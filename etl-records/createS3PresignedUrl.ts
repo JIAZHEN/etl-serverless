@@ -6,7 +6,7 @@ import httpJsonBodyParser from "@middy/http-json-body-parser";
 
 const getS3KeyFromInput = (input: EtlRecordCreateInput) => {
   const todayDate = new Date().toISOString().slice(0, 10);
-  return `${input.merchantId}/${input.partnerId}/${todayDate}/${input.partnerFile.filename}`;
+  return `${input.merchantId}/${input.partnerId}/${todayDate}/${input?.partnerFile?.filename}`;
 };
 
 const lambdaHandler = async ({

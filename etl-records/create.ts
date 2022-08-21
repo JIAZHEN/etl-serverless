@@ -2,14 +2,13 @@ import { APIGatewayProxyResult } from "aws-lambda";
 import { createEtlRecord } from "./dynamodb";
 import { EtlRecordCreateInput } from "./types";
 import { etlStatus } from "./util";
-import { uploadS3File } from "./s3";
 import { v4 as uuidv4 } from "uuid";
 import { withDefaultMiddy } from "./middleware";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 
 const getS3KeyFromInput = (input: EtlRecordCreateInput) => {
   const todayDate = new Date().toISOString().slice(0, 10);
-  return `${input.merchantId}/${input.partnerId}/${todayDate}/${input.partnerFile.filename}`;
+  return `${input.merchantId}/${input.partnerId}/${todayDate}/${input?.partnerFile?.filename}`;
 };
 
 const lambdaHandler = async ({
@@ -18,7 +17,6 @@ const lambdaHandler = async ({
   body: EtlRecordCreateInput;
 }): Promise<APIGatewayProxyResult> => {
   const s3Key = getS3KeyFromInput(body);
-  await uploadS3File(s3Key, body.partnerFile.content);
 
   delete body.partnerFile; // remove uploaded file
   const timeUtc = new Date().toUTCString();

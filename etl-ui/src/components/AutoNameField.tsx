@@ -11,9 +11,9 @@ export const AutoNameField = () => {
           label="Rule name"
           helperText="Rule name one word with hyphen. custom-rule-one"
           defaultValue={[
-            formData.rule.fact,
-            formData.rule.operator,
-            formData.rule.value,
+            formData?.rule?.fact,
+            formData?.rule?.operator,
+            formData?.rule?.value,
           ].join("-")}
           validate={[required()]}
         />

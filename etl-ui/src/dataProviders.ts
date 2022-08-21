@@ -9,19 +9,23 @@ const etlRecordApi =
 const etlRecordsOriginDataProvider = jsonServerProvider(etlRecordApi);
 const etlRecordsDataProvider = {
   ...etlRecordsOriginDataProvider,
-  create: (resource: string, params: any) => {
+  create: async (resource: string, params: any) => {
     if (resource !== "etl-records") {
       return etlRecordsOriginDataProvider.create(resource, params);
     }
     const partnerFile = params.data.partnerFile;
-    return convertFileToBinaryString(partnerFile).then((fileContent) =>
-      etlRecordsOriginDataProvider.create(resource, {
-        data: {
-          ...params.data,
-          partnerFile: { filename: partnerFile.title, content: fileContent },
-        },
-      })
-    );
+    const createParams = {
+      ...params.data,
+      partnerFile: { filename: partnerFile.title },
+    };
+
+    const presignedUrl = await createUploadPresignedUrl(resource, createParams);
+    console.log(presignedUrl);
+    const fileContent = await convertFileToBinaryString(partnerFile);
+    await uploadFileToS3(presignedUrl, fileContent);
+    return etlRecordsOriginDataProvider.create(resource, {
+      data: createParams,
+    });
   },
   process: (resource: string, params: any) => {
     return fetch(`${etlRecordApi}/${resource}/${params.id}/process`, {
@@ -30,12 +34,39 @@ const etlRecordsDataProvider = {
   },
 };
 
+const createUploadPresignedUrl = async (
+  resource: string,
+  createParams: any
+) => {
+  const presignedEndpoint = `${etlRecordApi}/${resource}/createS3PresignedUrl`;
+  const presignedResponse = await fetch(presignedEndpoint, {
+    method: "POST",
+    body: JSON.stringify(createParams),
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  const presignedResponseJson = await presignedResponse.json();
+  return presignedResponseJson.presignedUrl;
+};
+
+const uploadFileToS3 = async (presignedUrl: string, fileContent: any) => {
+  const response = await fetch(presignedUrl, {
+    method: "PUT",
+    body: fileContent,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  await response.json();
+};
+
 const convertFileToBinaryString = (file: any) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
-    reader.readAsBinaryString(file.rawFile);
+    reader.readAsDataURL(file.rawFile);
   });
 
 export const dataProviders = combineDataProviders((resource) => {

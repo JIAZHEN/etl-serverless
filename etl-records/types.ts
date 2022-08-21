@@ -4,6 +4,10 @@ export interface EtlRecordCreateInput {
   s3Key: string;
   [key: string]: any;
   etlStatus: string;
+  partnerFile?: {
+    filename: string;
+    [key: string]: any;
+  };
 }
 
 export interface EtlResult {
