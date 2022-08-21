@@ -1,6 +1,6 @@
 import { Stack, StackProps, RemovalPolicy, Duration } from "aws-cdk-lib";
 import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
-import { Bucket } from "aws-cdk-lib/aws-s3";
+import { Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
 import {
   NodejsFunction,
   NodejsFunctionProps,
@@ -13,6 +13,14 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import { corsHosts } from "../globalConfig";
 
 const lambdaPath = join(__dirname, "../etl-records");
+
+const amzAllowedHeaders = [
+  "Content-Type",
+  "X-Amz-Date",
+  "Authorization",
+  "X-Api-Key",
+  "X-Total-Count",
+];
 
 interface EtlRecordsStackProps extends StackProps {
   rulesGateway: RestApi;
@@ -29,6 +37,13 @@ export class EtlRecordsStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       publicReadAccess: false,
+      cors: [
+        {
+          allowedMethods: [HttpMethods.GET, HttpMethods.POST, HttpMethods.PUT],
+          allowedOrigins: corsHosts,
+          allowedHeaders: amzAllowedHeaders,
+        },
+      ],
     });
     const recordsTable = this.createEtlRecordsTable();
     // SQL with dead letter queue
@@ -132,13 +147,7 @@ export class EtlRecordsStack extends Stack {
     new RestApi(this, "EtlRecords API", {
       restApiName: "EtlRecords Service",
       defaultCorsPreflightOptions: {
-        allowHeaders: [
-          "Content-Type",
-          "X-Amz-Date",
-          "Authorization",
-          "X-Api-Key",
-          "X-Total-Count",
-        ],
+        allowHeaders: amzAllowedHeaders,
         allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
         allowCredentials: true,
         allowOrigins: corsHosts,

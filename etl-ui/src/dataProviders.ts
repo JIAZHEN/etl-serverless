@@ -20,9 +20,7 @@ const etlRecordsDataProvider = {
     };
 
     const presignedUrl = await createUploadPresignedUrl(resource, createParams);
-    console.log(presignedUrl);
-    const fileContent = await convertFileToBinaryString(partnerFile);
-    await uploadFileToS3(presignedUrl, fileContent);
+    await uploadFileToS3(presignedUrl, partnerFile);
     return etlRecordsOriginDataProvider.create(resource, {
       data: createParams,
     });
@@ -43,30 +41,31 @@ const createUploadPresignedUrl = async (
     method: "POST",
     body: JSON.stringify(createParams),
     headers: {
-      "Content-Type": "multipart/form-data",
+      "Content-Type": "application/json",
     },
   });
   const presignedResponseJson = await presignedResponse.json();
   return presignedResponseJson.presignedUrl;
 };
 
-const uploadFileToS3 = async (presignedUrl: string, fileContent: any) => {
+const uploadFileToS3 = async (presignedUrl: string, partnerFile: any) => {
+  const rawFile = partnerFile.rawFile;
+  const formData = new FormData();
+  formData.append("myfile", rawFile);
+  // const fileContent = convertFileToBinaryString(rawFile);
   const response = await fetch(presignedUrl, {
     method: "PUT",
-    body: fileContent,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    body: formData,
   });
-  await response.json();
+  await response.text();
 };
 
-const convertFileToBinaryString = (file: any) =>
+const convertFileToBinaryString = async (rawFile: Blob) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
-    reader.readAsDataURL(file.rawFile);
+    reader.readAsDataURL(rawFile);
   });
 
 export const dataProviders = combineDataProviders((resource) => {
