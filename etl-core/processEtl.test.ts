@@ -38,7 +38,7 @@ describe("#rowProcessor", () => {
       expect(etlResult).toEqual({
         errors: { "id-equal-123": 1 },
         invalid: 1,
-        total: 0,
+        total: 1,
         valid: 0,
       });
     });
@@ -79,7 +79,7 @@ describe("#rowProcessor", () => {
       expect(etlResult).toEqual({
         errors: {},
         invalid: 0,
-        total: 0,
+        total: 1,
         valid: 1,
       });
     });

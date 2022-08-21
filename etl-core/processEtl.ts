@@ -7,7 +7,7 @@ import { parse } from "@fast-csv/parse";
 import { format, CsvFormatterStream, Row } from "@fast-csv/format";
 import fetch from "node-fetch";
 import { Engine, RuleResult, Event } from "json-rules-engine";
-import { Stream } from "stream";
+import { Readable } from "stream";
 import { URLSearchParams } from "url";
 import fs from "fs";
 import { SQSEvent } from "aws-lambda";
@@ -42,11 +42,8 @@ export const rowProcessor = async (
   let rowResult = true;
 
   [...results, ...failureResults].forEach((result) => {
-    if (!result.event) {
-      throw new Error("error!");
-    }
+    if (!result.event) throw new Error("error!");
     const event: Event = result.event;
-
     if (isInvalidEvent(event, result)) {
       rowResult = false;
       const errors: { [key: string]: any } = etlResult.errors;
@@ -61,41 +58,56 @@ export const rowProcessor = async (
   } else {
     etlResult.invalid += 1;
   }
+  etlResult.total += 1;
 };
 
-const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
+const execStreamWithRules = async (body: Readable, etlRecord: EtlRecord) => {
+  const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
+  console.log("Get the following rules", rules);
+  const engine = setupRuleEngine(rules);
+
+  const csvFile = fs.createWriteStream(tempFileName);
+  const stream = format({ headers: true });
+  stream.pipe(csvFile);
   const etlResult: EtlResult = {
     total: 0,
     valid: 0,
     invalid: 0,
     errors: {},
   };
-  const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
-  console.log("Get the following rules", rules);
-  const engine = setupRuleEngine(rules);
-  const csvFile = fs.createWriteStream(tempFileName);
-  const stream = format({ headers: true });
-  stream.pipe(csvFile);
 
-  const streamOutput: EtlResult = await new Promise((resolve, _) => {
-    body
-      .pipe(parse({ headers: true }))
+  const streamOutput = new Promise((resolve, reject) => {
+    const parser = parse({
+      headers: true,
+      trim: true,
+    });
+    parser
+      .on("error", (error) => {
+        etlResult.errors["file-parse-error"] = error.message;
+        return reject(etlResult);
+      })
       .on(
         "data",
         async (row) => await rowProcessor(row, engine, etlResult, stream)
       )
       .on("end", (rowCount: number) => {
         stream.end();
-        return resolve({ ...etlResult, total: rowCount });
+        return resolve(etlResult);
       });
+    body.pipe(parser);
   });
 
-  await Promise.resolve(streamOutput);
+  try {
+    await streamOutput;
+    etlRecord.etlStatus = "success";
+  } catch (error) {
+    etlRecord.etlStatus = "failed";
+  }
   await uploadS3File(
     getTransformedS3Key(etlRecord.s3Key),
     fs.readFileSync(tempFileName)
   );
-  return etlResult;
+  return { ...etlRecord, etlResult: etlResult };
 };
 
 export const handler = async (event: SQSEvent): Promise<void> => {
@@ -112,8 +124,8 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       etlResult: etlResult,
       etlStatus: "success",
     });
-    console.log("Successfully processed event", etlRecord);
-    return etlRecord;
+    console.log("Successfully processed event", etlResult);
+    return etlResult;
   });
 
   await Promise.all(messages);
