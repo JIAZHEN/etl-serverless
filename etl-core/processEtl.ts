@@ -71,6 +71,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
     errors: {},
   };
   const rules = await getRulesBy(etlRecord.merchantId, etlRecord.partnerId);
+  console.log("Get the following rules", rules);
   const engine = setupRuleEngine(rules);
   const csvFile = fs.createWriteStream(tempFileName);
   const stream = format({ headers: true });
@@ -100,6 +101,7 @@ const execStreamWithRules = async (body: Stream, etlRecord: EtlRecord) => {
 export const handler = async (event: SQSEvent): Promise<void> => {
   const messages = event.Records.map(async (record) => {
     const etlRecord = JSON.parse(record.body);
+    console.log("Start processing ETL record", etlRecord);
     const s3Object = await getS3Object(etlRecord.s3Key);
     const etlResult = await execStreamWithRules(
       s3Object.Body,
