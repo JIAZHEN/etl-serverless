@@ -49,24 +49,12 @@ const createUploadPresignedUrl = async (
 };
 
 const uploadFileToS3 = async (presignedUrl: string, partnerFile: any) => {
-  const rawFile = partnerFile.rawFile;
-  const formData = new FormData();
-  formData.append("myfile", rawFile);
-  // const fileContent = convertFileToBinaryString(rawFile);
   const response = await fetch(presignedUrl, {
     method: "PUT",
-    body: formData,
+    body: partnerFile.rawFile,
   });
   await response.text();
 };
-
-const convertFileToBinaryString = async (rawFile: Blob) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(rawFile);
-  });
 
 export const dataProviders = combineDataProviders((resource) => {
   switch (resource) {
