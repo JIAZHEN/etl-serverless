@@ -52,6 +52,8 @@ export const rowProcessor = async (
     }
   });
 
+  if (etlResult.total % 100000 === 0) console.log(etlResult);
+
   if (rowResult) {
     etlResult.valid += 1;
     writeStream.write(row);
