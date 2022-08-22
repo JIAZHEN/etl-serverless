@@ -109,8 +109,10 @@ const execStreamWithRules = async (body: Readable, etlRecord: EtlRecord) => {
   } catch (e) {
     if (e instanceof Error) {
       etlRecord.etlResult.errors.reason = e.message;
-      etlRecord.etlStatus = "failed";
+    } else {
+      console.log(e);
     }
+    etlRecord.etlStatus = "failed";
   }
   return { ...etlRecord, etlResult: etlResult };
 };
