@@ -101,14 +101,17 @@ const execStreamWithRules = async (body: Readable, etlRecord: EtlRecord) => {
 
   try {
     await streamOutput;
+    await uploadS3File(
+      getTransformedS3Key(etlRecord.s3Key),
+      fs.readFileSync(tempFileName)
+    );
     etlRecord.etlStatus = "success";
-  } catch (error) {
-    etlRecord.etlStatus = "failed";
+  } catch (e) {
+    if (e instanceof Error) {
+      etlRecord.etlResult.errors.reason = e.message;
+      etlRecord.etlStatus = "failed";
+    }
   }
-  await uploadS3File(
-    getTransformedS3Key(etlRecord.s3Key),
-    fs.readFileSync(tempFileName)
-  );
   return { ...etlRecord, etlResult: etlResult };
 };
 
@@ -117,17 +120,13 @@ export const handler = async (event: SQSEvent): Promise<void> => {
     const etlRecord = JSON.parse(record.body);
     console.log("Start processing ETL record", etlRecord);
     const s3Object = await getS3Object(etlRecord.s3Key);
-    const etlResult = await execStreamWithRules(
+    const etlRecordWithResult = await execStreamWithRules(
       s3Object.Body,
       etlRecord as EtlRecord
     );
-    await updateEtlRecord({
-      ...etlRecord,
-      etlResult: etlResult,
-      etlStatus: "success",
-    });
-    console.log("Successfully processed event", etlResult);
-    return etlResult;
+    await updateEtlRecord({ ...etlRecordWithResult });
+    console.log("Successfully processed event", etlRecordWithResult);
+    return etlRecordWithResult;
   });
 
   await Promise.all(messages);
