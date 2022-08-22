@@ -57,5 +57,6 @@ export class EtlCoreStack extends Stack {
     bundling: { externalModules: ["aws-sdk"] },
     runtime: Runtime.NODEJS_16_X,
     timeout: Duration.minutes(15),
+    memorySize: 512,
   });
 }
