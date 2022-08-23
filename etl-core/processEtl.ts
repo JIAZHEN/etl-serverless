@@ -68,9 +68,10 @@ const execStreamWithRules = async (body: Readable, etlRecord: EtlRecord) => {
   console.log("Get the following rules", rules);
   const engine = setupRuleEngine(rules);
 
-  const csvFile = fs.createWriteStream(tempFileName);
-  const stream = format({ headers: true });
-  stream.pipe(csvFile);
+  const csvFileStream = fs.createWriteStream(tempFileName);
+  const formatStream = format({ headers: true });
+  formatStream.pipe(csvFileStream).on("end", () => csvFileStream.end());
+
   const etlResult: EtlResult = {
     total: 0,
     valid: 0,
@@ -90,10 +91,10 @@ const execStreamWithRules = async (body: Readable, etlRecord: EtlRecord) => {
       })
       .on(
         "data",
-        async (row) => await rowProcessor(row, engine, etlResult, stream)
+        async (row) => await rowProcessor(row, engine, etlResult, formatStream)
       )
       .on("end", (rowCount: number) => {
-        stream.end();
+        formatStream.end();
         return resolve(etlResult);
       });
     body.pipe(parser);
