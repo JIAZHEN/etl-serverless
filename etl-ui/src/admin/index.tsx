@@ -1,7 +1,7 @@
 import { Admin, Resource } from "react-admin";
 import { dataProviders } from "../dataProviders";
 import { RuleList, RuleEdit, RuleCreate } from "./Rules";
-import { RecordList, RecordEdit, RecordCreate } from "./Records";
+import { RecordList, RecordEdit, RecordCreate, RecordShow } from "./Records";
 import RuleFolderIcon from "@mui/icons-material/RuleFolder";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
 
@@ -19,6 +19,7 @@ const AdminApp = () => (
       list={RecordList}
       edit={RecordEdit}
       create={RecordCreate}
+      show={RecordShow}
       icon={PublishedWithChangesIcon}
     />
   </Admin>

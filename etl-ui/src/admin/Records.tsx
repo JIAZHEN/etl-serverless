@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  useRedirect,
   List,
   Datagrid,
   TextField,
@@ -18,7 +19,11 @@ import {
   Labeled,
   FunctionField,
   WrapperField,
+  useGetOne,
+  Loading,
 } from "react-admin";
+import { useParams } from "react-router-dom";
+import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -44,7 +49,7 @@ const ETL_STATUS = [
 
 export const RecordList = () => (
   <List>
-    <Datagrid>
+    <Datagrid rowClick="show">
       <TextField source="id" />
       <WrapperField label="Primary key" textAlign="center">
         <TextField source="merchantId" />
@@ -114,3 +119,35 @@ export const RecordCreate = (props: EtlRecordInput) => (
     </SimpleForm>
   </Create>
 );
+
+export const RecordShow = () => {
+  const { id } = useParams(); // this component is rendered in the /books/:id path
+  const redirect = useRedirect();
+  const { data, isLoading } = useGetOne(
+    "etl-records",
+    { id },
+    { onError: () => redirect("/etl-records") }
+  );
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  return (
+    <Card sx={{ width: 600, margin: "auto" }}>
+      <CardContent>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Typography variant="h6" gutterBottom>
+              Posters Galore
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="h6" gutterBottom align="right">
+              Invoice {data.id}
+            </Typography>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+};
