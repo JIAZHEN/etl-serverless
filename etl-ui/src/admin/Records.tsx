@@ -119,6 +119,47 @@ export const RecordCreate = (props: EtlRecordInput) => (
   </Create>
 );
 
+const RecordCard = ({
+  title,
+  numberAttr,
+  avatarSx,
+}: {
+  title: string;
+  numberAttr: string;
+  avatarSx: object;
+}) => {
+  return (
+    <Grid item sm={6}>
+      <Card>
+        <CardContent>
+          <Grid container spacing={3} sx={{ justifyContent: "space-between" }}>
+            <Grid item>
+              <Typography color="textSecondary" gutterBottom variant="overline">
+                {title}
+              </Typography>
+              <WithRecord
+                label="Rating"
+                render={(record) => (
+                  <Typography color="textPrimary" variant="h4">
+                    {record.etlResult[numberAttr].toLocaleString("en-GB")}
+                  </Typography>
+                )}
+              />
+            </Grid>
+            <Grid item>
+              <Avatar sx={avatarSx}>
+                {numberAttr === "total" && <CalculateIcon />}
+                {numberAttr === "valid" && <CheckCircleIcon />}
+                {numberAttr === "invalid" && <CancelIcon />}
+              </Avatar>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
+};
+
 export const RecordShow = () => {
   return (
     <Show>
@@ -143,40 +184,21 @@ export const RecordShow = () => {
           }}
         />
         <Grid container spacing={3} sx={{ justifyContent: "space-between" }}>
-          <Grid item sm={6}>
-            <Card>
-              <CardContent>
-                <Grid
-                  container
-                  spacing={3}
-                  sx={{ justifyContent: "space-between" }}
-                >
-                  <Grid item>
-                    <Typography
-                      color="textSecondary"
-                      gutterBottom
-                      variant="overline"
-                    >
-                      TOTAL ROWS
-                    </Typography>
-                    <WithRecord
-                      label="Rating"
-                      render={(record) => (
-                        <Typography color="textPrimary" variant="h4">
-                          {record.etlResult.total.toLocaleString("en-GB")}
-                        </Typography>
-                      )}
-                    />
-                  </Grid>
-                  <Grid item>
-                    <Avatar sx={{ backgroundColor: "success.main" }}>
-                      <CheckCircleIcon />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
+          <RecordCard
+            title="Valid"
+            numberAttr="valid"
+            avatarSx={{ backgroundColor: "success.main" }}
+          />
+          <RecordCard
+            title="TOTAL"
+            numberAttr="total"
+            avatarSx={{ backgroundColor: "primary.main" }}
+          />
+          <RecordCard
+            title="Invalid"
+            numberAttr="invalid"
+            avatarSx={{ backgroundColor: "error.main" }}
+          />
         </Grid>
       </SimpleShowLayout>
     </Show>
