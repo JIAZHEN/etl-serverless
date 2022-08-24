@@ -200,6 +200,33 @@ export const RecordShow = () => {
             avatarSx={{ backgroundColor: "error.main" }}
           />
         </Grid>
+        <WithRecord
+          render={(record) => (
+            <>
+              {Object.keys(record.etlResult.errors).map((key) => {
+                return (
+                  <>
+                    <Typography
+                      color="textSecondary"
+                      gutterBottom
+                      variant="overline"
+                    >
+                      {key}
+                    </Typography>
+                    <WithRecord
+                      label="Rating"
+                      render={(record) => (
+                        <Typography color="textPrimary" variant="h6">
+                          {record.etlResult.errors[key].toLocaleString("en-GB")}
+                        </Typography>
+                      )}
+                    />
+                  </>
+                );
+              })}
+            </>
+          )}
+        />
       </SimpleShowLayout>
     </Show>
   );
