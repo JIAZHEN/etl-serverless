@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  useRedirect,
   List,
   Datagrid,
   TextField,
@@ -19,11 +18,11 @@ import {
   Labeled,
   FunctionField,
   WrapperField,
-  useGetOne,
-  Loading,
+  WithRecord,
+  Show,
+  SimpleShowLayout,
 } from "react-admin";
-import { useParams } from "react-router-dom";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Card, CardContent, Grid, Typography, Avatar } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -121,33 +120,65 @@ export const RecordCreate = (props: EtlRecordInput) => (
 );
 
 export const RecordShow = () => {
-  const { id } = useParams(); // this component is rendered in the /books/:id path
-  const redirect = useRedirect();
-  const { data, isLoading } = useGetOne(
-    "etl-records",
-    { id },
-    { onError: () => redirect("/etl-records") }
-  );
-  if (isLoading) {
-    return <Loading />;
-  }
-
   return (
-    <Card sx={{ width: 600, margin: "auto" }}>
-      <CardContent>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography variant="h6" gutterBottom>
-              Posters Galore
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="h6" gutterBottom align="right">
-              Invoice {data.id}
-            </Typography>
+    <Show>
+      <SimpleShowLayout>
+        <TextField source="id" />
+        <TextField source="merchantId" />
+        <TextField source="partnerId" />
+        <UrlField source="s3Key" />
+        <FunctionField
+          label="Status"
+          render={(record: any) => {
+            switch (record.etlStatus) {
+              case "success":
+                return <CloudDoneIcon color="success" />;
+              case "failed":
+                return <ErrorIcon color="error" />;
+              case "processing":
+                return <CircularProgress />;
+              default:
+                return <PendingIcon />;
+            }
+          }}
+        />
+        <Grid container spacing={3} sx={{ justifyContent: "space-between" }}>
+          <Grid item sm={6}>
+            <Card>
+              <CardContent>
+                <Grid
+                  container
+                  spacing={3}
+                  sx={{ justifyContent: "space-between" }}
+                >
+                  <Grid item>
+                    <Typography
+                      color="textSecondary"
+                      gutterBottom
+                      variant="overline"
+                    >
+                      TOTAL ROWS
+                    </Typography>
+                    <WithRecord
+                      label="Rating"
+                      render={(record) => (
+                        <Typography color="textPrimary" variant="h4">
+                          {record.etlResult.total.toLocaleString("en-GB")}
+                        </Typography>
+                      )}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <Avatar sx={{ backgroundColor: "success.main" }}>
+                      <CheckCircleIcon />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
           </Grid>
         </Grid>
-      </CardContent>
-    </Card>
+      </SimpleShowLayout>
+    </Show>
   );
 };
