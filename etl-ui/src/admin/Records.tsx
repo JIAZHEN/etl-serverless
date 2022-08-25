@@ -76,11 +76,11 @@ export const RecordList = () => (
         render={(record: any) => (
           <WrapperField>
             <CalculateIcon color="info" fontSize="small" />{" "}
-            {record.etlResult.total}
+            {record.etlResult.total?.toLocaleString("en-GB")}
             <CheckCircleIcon color="success" fontSize="small" />{" "}
-            {record.etlResult.valid}
+            {record.etlResult.valid?.toLocaleString("en-GB")}
             <CancelIcon color="error" fontSize="small" />{" "}
-            {record.etlResult.invalid}
+            {record.etlResult.invalid?.toLocaleString("en-GB")}
           </WrapperField>
         )}
       />
