@@ -22,14 +22,23 @@ import {
   Show,
   SimpleShowLayout,
 } from "react-admin";
-import { Card, CardContent, Grid, Typography, Avatar } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
+import {
+  Card,
+  CardContent,
+  Grid,
+  Typography,
+  Avatar,
+  Tooltip,
+} from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
-import CalculateIcon from "@mui/icons-material/Calculate";
-import CloudDoneIcon from "@mui/icons-material/CloudDone";
-import ErrorIcon from "@mui/icons-material/Error";
-import PendingIcon from "@mui/icons-material/Pending";
+import {
+  Calculate,
+  CheckCircle,
+  Cancel,
+  CloudDone,
+  Error,
+  Pending,
+} from "@mui/icons-material";
 import { EtlButton } from "../components/EtlButton";
 import { DateTimeListItem } from "../components/DateTimeListItem";
 
@@ -60,13 +69,29 @@ export const RecordList = () => (
         render={(record: any) => {
           switch (record.etlStatus) {
             case "success":
-              return <CloudDoneIcon color="success" />;
+              return (
+                <Tooltip title={record.etlStatus}>
+                  <CloudDone color="success" />
+                </Tooltip>
+              );
             case "failed":
-              return <ErrorIcon color="error" />;
+              return (
+                <Tooltip title={record.etlStatus}>
+                  <Error color="error" />
+                </Tooltip>
+              );
             case "processing":
-              return <CircularProgress />;
+              return (
+                <Tooltip title={record.etlStatus}>
+                  <CircularProgress />
+                </Tooltip>
+              );
             default:
-              return <PendingIcon />;
+              return (
+                <Tooltip title={record.etlStatus}>
+                  <Pending />
+                </Tooltip>
+              );
           }
         }}
       />
@@ -75,11 +100,11 @@ export const RecordList = () => (
         label="Etl result"
         render={(record: any) => (
           <WrapperField>
-            <CalculateIcon color="info" fontSize="small" />{" "}
+            <Calculate color="info" fontSize="small" />{" "}
             {record.etlResult.total?.toLocaleString("en-GB")}
-            <CheckCircleIcon color="success" fontSize="small" />{" "}
+            <CheckCircle color="success" fontSize="small" />{" "}
             {record.etlResult.valid?.toLocaleString("en-GB")}
-            <CancelIcon color="error" fontSize="small" />{" "}
+            <Cancel color="error" fontSize="small" />{" "}
             {record.etlResult.invalid?.toLocaleString("en-GB")}
           </WrapperField>
         )}
@@ -141,16 +166,16 @@ const RecordCard = ({
                 label="Rating"
                 render={(record) => (
                   <Typography color="textPrimary" variant="h4">
-                    {record.etlResult[numberAttr].toLocaleString("en-GB")}
+                    {record.etlResult[numberAttr]?.toLocaleString("en-GB")}
                   </Typography>
                 )}
               />
             </Grid>
             <Grid item>
               <Avatar sx={avatarSx}>
-                {numberAttr === "total" && <CalculateIcon />}
-                {numberAttr === "valid" && <CheckCircleIcon />}
-                {numberAttr === "invalid" && <CancelIcon />}
+                {numberAttr === "total" && <Calculate />}
+                {numberAttr === "valid" && <CheckCircle />}
+                {numberAttr === "invalid" && <Cancel />}
               </Avatar>
             </Grid>
           </Grid>
@@ -173,13 +198,13 @@ export const RecordShow = () => {
           render={(record: any) => {
             switch (record.etlStatus) {
               case "success":
-                return <CloudDoneIcon color="success" />;
+                return <CloudDone color="success" />;
               case "failed":
-                return <ErrorIcon color="error" />;
+                return <Error color="error" />;
               case "processing":
                 return <CircularProgress />;
               default:
-                return <PendingIcon />;
+                return <Pending />;
             }
           }}
         />
@@ -201,31 +226,35 @@ export const RecordShow = () => {
           />
         </Grid>
         <WithRecord
-          render={(record) => (
-            <>
-              {Object.keys(record.etlResult.errors).map((key) => {
-                return (
-                  <>
-                    <Typography
-                      color="textSecondary"
-                      gutterBottom
-                      variant="overline"
-                    >
-                      {key}
-                    </Typography>
-                    <WithRecord
-                      label="Rating"
-                      render={(record) => (
-                        <Typography color="textPrimary" variant="h6">
-                          {record.etlResult.errors[key].toLocaleString("en-GB")}
-                        </Typography>
-                      )}
-                    />
-                  </>
-                );
-              })}
-            </>
-          )}
+          render={(record) =>
+            record.etlResult.errors && (
+              <>
+                {Object.keys(record.etlResult.errors).map((key) => {
+                  return (
+                    <>
+                      <Typography
+                        color="textSecondary"
+                        gutterBottom
+                        variant="overline"
+                      >
+                        {key}
+                      </Typography>
+                      <WithRecord
+                        label="Rating"
+                        render={(record) => (
+                          <Typography color="textPrimary" variant="h6">
+                            {record.etlResult.errors[key].toLocaleString(
+                              "en-GB"
+                            )}
+                          </Typography>
+                        )}
+                      />
+                    </>
+                  );
+                })}
+              </>
+            )
+          }
         />
       </SimpleShowLayout>
     </Show>
