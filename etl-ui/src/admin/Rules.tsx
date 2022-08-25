@@ -42,8 +42,13 @@ const RULE_TYPES = [
   { id: "row-invalid", name: "Row invalid" },
 ];
 
+const etlRulesFilters = [
+  <TextInput label="MerchantId" source="merchantId" alwaysOn />,
+  <TextInput label="PartnerId" source="partnerId" alwaysOn />,
+];
+
 export const RuleList = () => (
-  <List>
+  <List filters={etlRulesFilters}>
     <Datagrid rowClick="edit">
       <TextField source="id" />
       <WrapperField label="Primary key" textAlign="center">
