@@ -1,12 +1,13 @@
 import { Admin, Resource } from "react-admin";
 import { dataProviders } from "../dataProviders";
+import { authProvider } from "../authProvider";
 import { RuleList, RuleEdit, RuleCreate } from "./Rules";
 import { RecordList, RecordEdit, RecordCreate, RecordShow } from "./Records";
 import RuleFolderIcon from "@mui/icons-material/RuleFolder";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
 
 const AdminApp = () => (
-  <Admin dataProvider={dataProviders}>
+  <Admin dataProvider={dataProviders} authProvider={authProvider}>
     <Resource
       name="etl-rules"
       list={RuleList}
