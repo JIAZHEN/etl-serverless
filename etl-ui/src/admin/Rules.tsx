@@ -52,10 +52,7 @@ export const RuleList = () => {
   if (isLoading) return <>Loading...</>;
 
   return (
-    <List
-      filters={etlRulesFilters}
-      filter={{ merchantId: identity?.fullName?.toLowerCase() }}
-    >
+    <List filters={etlRulesFilters} filter={{ merchantId: identity?.fullName }}>
       <Datagrid rowClick="edit">
         <TextField source="id" />
         <WrapperField label="Primary key" textAlign="center">
