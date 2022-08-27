@@ -22,7 +22,7 @@ export const authProvider = {
   logout: async () => {
     const isAuthenticated = await auth0.isAuthenticated();
     if (isAuthenticated) {
-      return auth0.logout({ returnTo: "http://localhost:3000/#/login" });
+      return auth0.logout({ returnTo: window.location.origin });
     } else {
       return Promise.resolve();
     }
