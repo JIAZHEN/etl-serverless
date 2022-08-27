@@ -13,6 +13,7 @@ const auth0 = new Auth0Client({
   redirect_uri: window.location.origin,
   cacheLocation: "localstorage",
   useRefreshTokens: true,
+  auth0Logout: true,
 });
 
 export const authProvider = {
@@ -21,17 +22,19 @@ export const authProvider = {
   logout: async () => {
     const isAuthenticated = await auth0.isAuthenticated();
     if (isAuthenticated) {
-      return auth0.logout({
-        returnTo: window.location.origin,
-        federated: true,
-      });
+      return auth0.logout({ returnTo: "http://localhost:3000/#/login" });
     } else {
-      Promise.resolve();
+      return Promise.resolve();
     }
   },
   checkAuth: async () => {
     const isAuthenticated = await auth0.isAuthenticated();
-    return isAuthenticated ? Promise.resolve() : Promise.reject();
+    if (isAuthenticated) {
+      return Promise.resolve();
+    } else {
+      await auth0.getTokenSilently();
+      return;
+    }
   },
   checkError: (error: any) => {
     const status = error.status;
@@ -43,6 +46,7 @@ export const authProvider = {
   getIdentity: async () => {
     const isAuthenticated = await auth0.isAuthenticated();
     if (isAuthenticated) {
+      await auth0.getTokenSilently();
       const user = await auth0.getUser();
       return Promise.resolve({
         id: user?.sub || "",
