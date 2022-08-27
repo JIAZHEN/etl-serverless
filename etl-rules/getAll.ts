@@ -13,15 +13,26 @@ const lambdaHandler = async ({
   queryStringParameters: APIGatewayProxyEventQueryStringParameters;
 }): Promise<APIGatewayProxyResult> => {
   let cmd = null;
-  if (queryStringParameters?.merchantId || queryStringParameters?.partnerId) {
+  const commonParams = {
+    TableName: Config.RULES_TABLE_NAME,
+    IndexName: Config.MERCHANTID_INDEX,
+    KeyConditionExpression: "merchantId=:merchantId",
+  };
+
+  if (queryStringParameters?.merchantId && queryStringParameters?.partnerId) {
     cmd = new QueryCommand({
-      TableName: Config.RULES_TABLE_NAME,
-      IndexName: Config.MERCHANTID_INDEX,
-      KeyConditionExpression: "merchantId=:merchantId",
+      ...commonParams,
       FilterExpression: "partnerId=:partnerId",
       ExpressionAttributeValues: {
-        ":merchantId": { S: queryStringParameters.merchantId || "" },
-        ":partnerId": { S: queryStringParameters.partnerId || "" },
+        ":merchantId": { S: queryStringParameters.merchantId },
+        ":partnerId": { S: queryStringParameters.partnerId },
+      },
+    });
+  } else if (queryStringParameters?.merchantId) {
+    cmd = new QueryCommand({
+      ...commonParams,
+      ExpressionAttributeValues: {
+        ":merchantId": { S: queryStringParameters.merchantId },
       },
     });
   } else {

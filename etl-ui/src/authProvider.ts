@@ -33,7 +33,7 @@ export const authProvider = {
       return Promise.resolve();
     } else {
       await auth0.getTokenSilently();
-      return;
+      return Promise.reject({ message: "login.required" });
     }
   },
   checkError: (error: any) => {

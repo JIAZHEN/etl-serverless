@@ -14,6 +14,7 @@ import {
   DeleteButton,
   RadioButtonGroupInput,
   WrapperField,
+  useGetIdentity,
 } from "react-admin";
 import { AutoNameField } from "../components/AutoNameField";
 import { DateTimeListItem } from "../components/DateTimeListItem";
@@ -43,30 +44,37 @@ const RULE_TYPES = [
 ];
 
 const etlRulesFilters = [
-  <TextInput label="MerchantId" source="merchantId" alwaysOn />,
   <TextInput label="PartnerId" source="partnerId" alwaysOn />,
 ];
 
-export const RuleList = () => (
-  <List filters={etlRulesFilters}>
-    <Datagrid rowClick="edit">
-      <TextField source="id" />
-      <WrapperField label="Primary key" textAlign="center">
-        <TextField source="merchantId" />
-        <ChipField source="partnerId" />
-      </WrapperField>
-      <TextField label="Rule name" source="event.params.name" />
-      <TextField label="Rule type" source="event.type" />
-      <TextField label="Rule field" source="rule.fact" />
-      <TextField label="Rule operator" source="rule.operator" />
-      <TextField label="Rule value" source="rule.value" />
-      <DateTimeListItem source="createdAt" />
-      <DateTimeListItem source="updatedAt" />
-      <EditButton />
-      <DeleteButton />
-    </Datagrid>
-  </List>
-);
+export const RuleList = () => {
+  const { identity, isLoading } = useGetIdentity();
+  if (isLoading) return <>Loading...</>;
+
+  return (
+    <List
+      filters={etlRulesFilters}
+      filter={{ merchantId: identity?.fullName?.toLowerCase() }}
+    >
+      <Datagrid rowClick="edit">
+        <TextField source="id" />
+        <WrapperField label="Primary key" textAlign="center">
+          <TextField source="merchantId" />
+          <ChipField source="partnerId" />
+        </WrapperField>
+        <TextField label="Rule name" source="event.params.name" />
+        <TextField label="Rule type" source="event.type" />
+        <TextField label="Rule field" source="rule.fact" />
+        <TextField label="Rule operator" source="rule.operator" />
+        <TextField label="Rule value" source="rule.value" />
+        <DateTimeListItem source="createdAt" />
+        <DateTimeListItem source="updatedAt" />
+        <EditButton />
+        <DeleteButton />
+      </Datagrid>
+    </List>
+  );
+};
 
 export const RuleEdit = () => (
   <Edit>
@@ -88,21 +96,32 @@ export const RuleEdit = () => (
   </Edit>
 );
 
-export const RuleCreate = (props: RuleInput) => (
-  <Create {...props}>
-    <SimpleForm>
-      <TextInput source="merchantId" validate={[required()]} fullWidth />
-      <TextInput source="partnerId" validate={[required()]} fullWidth />
-      <RadioButtonGroupInput
-        label="Rule type"
-        source="event.type"
-        choices={RULE_TYPES}
-        validate={[required()]}
-      />
-      <TextInput source="rule.fact" validate={[required()]} />
-      <SelectInput source="rule.operator" choices={OPERATORS} />
-      <TextInput source="rule.value" validate={[required()]} />
-      <AutoNameField />
-    </SimpleForm>
-  </Create>
-);
+export const RuleCreate = (props: RuleInput) => {
+  const { identity, isLoading } = useGetIdentity();
+  if (isLoading) return <>Loading...</>;
+
+  return (
+    <Create {...props}>
+      <SimpleForm>
+        <TextInput
+          source="merchantId"
+          validate={[required()]}
+          disabled={true}
+          defaultValue={identity?.fullName}
+          fullWidth
+        />
+        <TextInput source="partnerId" validate={[required()]} fullWidth />
+        <RadioButtonGroupInput
+          label="Rule type"
+          source="event.type"
+          choices={RULE_TYPES}
+          validate={[required()]}
+        />
+        <TextInput source="rule.fact" validate={[required()]} />
+        <SelectInput source="rule.operator" choices={OPERATORS} />
+        <TextInput source="rule.value" validate={[required()]} />
+        <AutoNameField />
+      </SimpleForm>
+    </Create>
+  );
+};
