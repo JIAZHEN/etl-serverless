@@ -33,7 +33,7 @@ export const authProvider = {
       return Promise.resolve();
     } else {
       await auth0.getTokenSilently();
-      return Promise.reject({ message: "login.required" });
+      return;
     }
   },
   checkError: (error: any) => {
@@ -46,7 +46,6 @@ export const authProvider = {
   getIdentity: async () => {
     const isAuthenticated = await auth0.isAuthenticated();
     if (isAuthenticated) {
-      await auth0.getTokenSilently();
       const user = await auth0.getUser();
       return Promise.resolve({
         id: user?.sub || "",
