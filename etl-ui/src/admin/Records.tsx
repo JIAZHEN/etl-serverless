@@ -42,6 +42,7 @@ import {
 } from "@mui/icons-material";
 import { EtlButton } from "../components/EtlButton";
 import { DateTimeListItem } from "../components/DateTimeListItem";
+import { MerchantIdField } from "../components/MerchantIdField";
 
 type EtlRecordInput = {
   partnerId: string;
@@ -88,7 +89,7 @@ export const RecordList = () => {
               case "processing":
                 return (
                   <Tooltip title={record.etlStatus}>
-                    <CircularProgress />
+                    <CircularProgress size="1.5rem" />
                   </Tooltip>
                 );
               default:
@@ -128,7 +129,7 @@ export const RecordEdit = () => (
   <Edit>
     <SimpleForm>
       <TextField source="id" />
-      <TextInput source="merchantId" validate={[required()]} />
+      <MerchantIdField />
       <TextInput source="partnerId" validate={[required()]} />
       <SelectInput source="etlStatus" choices={ETL_STATUS} />
       <Labeled label="S3 Key">
@@ -141,7 +142,7 @@ export const RecordEdit = () => (
 export const RecordCreate = (props: EtlRecordInput) => (
   <Create {...props}>
     <SimpleForm>
-      <TextInput source="merchantId" validate={[required()]} />
+      <MerchantIdField />
       <TextInput source="partnerId" validate={[required()]} />
       <FileInput source="partnerFile" accept="text/csv">
         <FileField source="src" title="title" />
