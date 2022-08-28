@@ -6,13 +6,14 @@ import {
   NodejsFunctionProps,
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
-import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, Table, ProjectionType } from "aws-cdk-lib/aws-dynamodb";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { join } from "path";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import { corsHosts } from "../globalConfig";
 
 const lambdaPath = join(__dirname, "../etl-records");
+const merchantIdIndexName = "merchantIdIndex";
 
 const amzAllowedHeaders = [
   "Content-Type",
@@ -60,6 +61,7 @@ export class EtlRecordsStack extends Stack {
     const nodeJsFunctionProps = this.createLambdaProps({
       RECORDS_TABLE_NAME: recordsTable.tableName,
       RECORDS_BUCKET_NAME: recordsBucket.bucketName,
+      MERCHANTID_INDEX: merchantIdIndexName,
       ETL_TO_PROCESS_QUEUE_URL: etlToProcessQueue.queueUrl,
       RULES_API_URL: props?.rulesGateway?.url || "",
       REGION: process.env.CDK_DEFAULT_REGION || "",
@@ -139,6 +141,13 @@ export class EtlRecordsStack extends Stack {
         name: "id",
         type: AttributeType.STRING,
       },
+    });
+    table.addGlobalSecondaryIndex({
+      indexName: merchantIdIndexName,
+      partitionKey: { name: "merchantId", type: AttributeType.STRING },
+      readCapacity: 1,
+      writeCapacity: 1,
+      projectionType: ProjectionType.ALL,
     });
     return table;
   };

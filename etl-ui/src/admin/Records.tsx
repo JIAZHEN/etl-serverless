@@ -21,6 +21,7 @@ import {
   WithRecord,
   Show,
   SimpleShowLayout,
+  useGetIdentity,
 } from "react-admin";
 import {
   Card,
@@ -55,68 +56,73 @@ const ETL_STATUS = [
   { id: "success", name: "success" },
 ];
 
-export const RecordList = () => (
-  <List>
-    <Datagrid rowClick="show">
-      <TextField source="id" />
-      <WrapperField label="Primary key" textAlign="center">
-        <TextField source="merchantId" />
-        <ChipField source="partnerId" />
-      </WrapperField>
-      <UrlField source="s3Key" />
-      <FunctionField
-        label="Status"
-        render={(record: any) => {
-          switch (record.etlStatus) {
-            case "success":
-              return (
-                <Tooltip title={record.etlStatus}>
-                  <CloudDone color="success" />
-                </Tooltip>
-              );
-            case "failed":
-              return (
-                <Tooltip title={record.etlStatus}>
-                  <Error color="error" />
-                </Tooltip>
-              );
-            case "processing":
-              return (
-                <Tooltip title={record.etlStatus}>
-                  <CircularProgress />
-                </Tooltip>
-              );
-            default:
-              return (
-                <Tooltip title={record.etlStatus}>
-                  <Pending />
-                </Tooltip>
-              );
-          }
-        }}
-      />
-      <FunctionField
-        sx={{ display: "flex" }}
-        label="Etl result"
-        render={(record: any) => (
-          <WrapperField>
-            <Calculate color="info" fontSize="small" />{" "}
-            {record.etlResult.total?.toLocaleString("en-GB")}
-            <CheckCircle color="success" fontSize="small" />{" "}
-            {record.etlResult.valid?.toLocaleString("en-GB")}
-            <Cancel color="error" fontSize="small" />{" "}
-            {record.etlResult.invalid?.toLocaleString("en-GB")}
-          </WrapperField>
-        )}
-      />
-      <DateTimeListItem source="createdAt" />
-      <DateTimeListItem source="updatedAt" />
-      <EtlButton />
-      <EditButton />
-      <DeleteButton />
-    </Datagrid>
-  </List>
-);
+export const RecordList = () => {
+  const { identity, isLoading } = useGetIdentity();
+  if (isLoading) return <>Loading...</>;
+
+  return (
+    <List filter={{ merchantId: identity?.fullName }}>
+      <Datagrid rowClick="show">
+        <TextField source="id" />
+        <WrapperField label="Primary key" textAlign="center">
+          <TextField source="merchantId" />
+          <ChipField source="partnerId" />
+        </WrapperField>
+        <UrlField source="s3Key" />
+        <FunctionField
+          label="Status"
+          render={(record: any) => {
+            switch (record.etlStatus) {
+              case "success":
+                return (
+                  <Tooltip title={record.etlStatus}>
+                    <CloudDone color="success" />
+                  </Tooltip>
+                );
+              case "failed":
+                return (
+                  <Tooltip title={record.etlStatus}>
+                    <Error color="error" />
+                  </Tooltip>
+                );
+              case "processing":
+                return (
+                  <Tooltip title={record.etlStatus}>
+                    <CircularProgress />
+                  </Tooltip>
+                );
+              default:
+                return (
+                  <Tooltip title={record.etlStatus}>
+                    <Pending />
+                  </Tooltip>
+                );
+            }
+          }}
+        />
+        <FunctionField
+          sx={{ display: "flex" }}
+          label="Etl result"
+          render={(record: any) => (
+            <WrapperField>
+              <Calculate color="info" fontSize="small" />{" "}
+              {record.etlResult.total?.toLocaleString("en-GB")}
+              <CheckCircle color="success" fontSize="small" />{" "}
+              {record.etlResult.valid?.toLocaleString("en-GB")}
+              <Cancel color="error" fontSize="small" />{" "}
+              {record.etlResult.invalid?.toLocaleString("en-GB")}
+            </WrapperField>
+          )}
+        />
+        <DateTimeListItem source="createdAt" />
+        <DateTimeListItem source="updatedAt" />
+        <EtlButton />
+        <EditButton />
+        <DeleteButton />
+      </Datagrid>
+    </List>
+  );
+};
 
 export const RecordEdit = () => (
   <Edit>
