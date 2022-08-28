@@ -17,6 +17,7 @@ const AdminApp = () => {
     getPermissions: () => Promise.reject("Unknown method"),
     getIdentity: () =>
       Promise.resolve({
+        ...user,
         id: user?.id,
         fullName: user?.given_name,
         avatar: user?.picture,
